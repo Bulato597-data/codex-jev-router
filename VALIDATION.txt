@@ -1,0 +1,8 @@
+Package validation
+
+Offline routing contract checks: passed after public safety edits.
+Local bridge checks: 6 passed, 0 failed after public safety edits.
+Installer: passed in a temporary home directory.
+Guide: five rendered pages inspected after metadata cleanup.
+Release: all 14 archive members, nested DOCX parts, and SHA256 hashes checked.
+No live Jev request or native Desktop acceptance test was performed during packaging.

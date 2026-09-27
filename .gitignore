@@ -1,0 +1,7 @@
+.DS_Store
+.env
+.env.*
+settings.json
+*.sock
+*.log
+__pycache__/
