@@ -10,7 +10,7 @@ trap 'rm -rf "$WORK_DIR"' EXIT
 mkdir -p "$WORK_DIR/home/.codex"
 export HOME="$WORK_DIR/home"
 
-# Mirror the seven documented desktop models, but also expose a GPT-Reserve
+# Mirror the documented desktop models, but also expose a GPT-Reserve
 # entry in the fixture. The reserve must never become a Jev option.
 jq '{models: ([.models[] | {slug: .id, visibility: "list", supported_reasoning_levels: [.codex_efforts[] | {effort: .}]}] + [{slug: "gpt-reserve", visibility: "list", supported_reasoning_levels: [{effort: "low"}]}])}' \
   "$SCRIPT_DIR/codex-model-catalog.json" > "$HOME/.codex/models_cache.json"
@@ -38,6 +38,13 @@ jq -e --arg task "$MOCK_EXPECT_TASK" --slurpfile source "$MOCK_SOURCE_CATALOG" '
   and (.state.routing_criteria | contains("Routine/bounded example:"))
   and (.state.routing_criteria | contains("Complex task example:"))
   and (.state.routing_criteria | contains("Highest-demand example:"))
+  and (.state.routing_criteria | contains("preserving the included Codex allowance"))
+  and (.state.routing_criteria | contains("least allowance-consuming sufficient model and effort"))
+  and (.state.official_model_documentation_text | contains("gpt-6-luna 2.5/0.25/12.5"))
+  and (.state.official_model_documentation_text | contains("gpt-6.1-sol 50/2.5/250"))
+  and (.state.official_model_documentation_text | contains("not a published per-task conversion for the included weekly allowance"))
+  and (.state.official_model_documentation_text | contains("Fast mode uses included allowance at 2.5x"))
+  and (.state.routing_criteria | contains("Do not use OpenAI API token prices as a proxy"))
   and (.state.routing_criteria | contains("A short request can still be hard"))
   and (.state.routing_criteria | contains("xhigh for interacting constraints"))
   and (.state.official_model_documentation_text | length > 9000)
@@ -52,7 +59,7 @@ jq -e --arg task "$MOCK_EXPECT_TASK" --slurpfile source "$MOCK_SOURCE_CATALOG" '
   and ((.state | has("model_catalog")) | not)
   and (([.state, .questions] | tostring | contains("https://")) | not)
   and (([.state, .questions] | tostring | contains("gpt-reserve")) | not)
-  and (.questions | length == 8)
+  and (.questions | length == 9)
   and (.questions.model.type == "choice")
   and (.questions.model.instructions | contains("Jev cannot browse"))
   and ((.questions.model.criteria | keys) == expected_options)
@@ -111,6 +118,16 @@ for task in \
   grep -F 'jev-advisory;choice=gpt-6-sol;effort=high;model=jev-1.13.0;confidence=0.92' <<< "$output" >/dev/null || die 'model, effort, or Jev metadata was lost'
 done
 
+# The newly released GPT-6.1 Sol must be offered and routable as a Sol model.
+write_response '{"model":"jev-1.13.0","answers":{"route":{"type":"choice","choice":"gpt_6_1_sol__high","confidence":0.92}},"usage":{"input_tokens":21,"output_tokens":7}}'
+rm -f "$WORK_DIR/called"
+output="$(run_route 'Make a small CSS fix to the mobile pricing card.')"
+grep -Fx 'called' "$WORK_DIR/called" >/dev/null || die 'Jev was not called for GPT-6.1 Sol selection'
+assert_field "$output" model gpt-6.1-sol
+assert_field "$output" effort high
+assert_field "$output" lane sol
+
+write_response '{"model":"jev-1.13.0","answers":{"route":{"type":"choice","choice":"gpt_6_sol__high","confidence":0.92}},"usage":{"input_tokens":21,"output_tokens":7}}'
 rm -f "$WORK_DIR/called"
 output="$(run_route 'Blueprint a cross-region system architecture.')"
 grep -Fx 'called' "$WORK_DIR/called" >/dev/null || die 'Jev was not called for a heavy automatic task'
@@ -133,6 +150,29 @@ grep -Fx 'called' "$WORK_DIR/called" >/dev/null || die 'Jev was not called befor
 assert_field "$output" model gpt-6-sol
 assert_field "$output" effort high
 assert_field "$output" route_override sensitive-risk-floor
+
+# A factual repo summary must not turn ordinary words such as "lives" and
+# "read-only" into a live operation or a request to read sensitive data.
+for task in \
+  $'Correct a typo in the command example in the README.\n\nRepository inspection (read-only factual summary): The example lives in README.md.' \
+  $'Make the narrow-screen heading wrap instead of clipping.\n\nRepository inspection (read-only factual summary): The markup lives under app/components/.' \
+  $'Correct a typo in the private fixture README.\n\nRepository inspection (read-only factual summary): The fixture is local.'; do
+  output="$(run_route "$task")"
+  assert_field "$output" route_source jev-choice
+  assert_field "$output" model gpt-6-luna
+  assert_field "$output" effort low
+  assert_field "$output" route_override ''
+done
+
+# Explicit operational language still wins over a cheap Jev recommendation.
+for task in \
+  'Change the live deployment version.' \
+  'Read a confidential document.'; do
+  output="$(run_route "$task")"
+  assert_field "$output" model gpt-6-sol
+  assert_field "$output" effort high
+  assert_field "$output" route_override sensitive-risk-floor
+done
 
 # A verified recommendation above the configured 0.70 floor is routed, even
 # when its confidence would previously have been rejected at 0.80.
@@ -172,7 +212,7 @@ mv "$WORK_DIR/edited.json" "$WORK_DIR/response.json"
 output="$(run_route 'Build a local task board with filtering and editable status columns.')"
 assert_field "$output" jev_status choice_routed
 assert_field "$output" route_source jev-choice
-assert_field "$output" effort high
+assert_field "$output" effort medium
 assert_field "$output" route_override effort-confidence-floor
 
 # A missing selected branch, invalid distribution, or unsupported choice
@@ -197,13 +237,13 @@ output="$(PATH="$WORK_DIR:$PATH" TYPESAFE_API_KEY='dummy-test-secret' CODEX_BIN=
 [[ ! -e "$WORK_DIR/called" ]] || die 'Jev ran despite the explicit model override'
 assert_field "$output" model gpt-6-astra
 
-# A forwarded Codex option may contain a credential. Hybrid routing must not
-# send option values to Jev or guess which argument is the task brief.
+# Forwarded Codex flags and positional arguments may contain secrets. They
+# cannot become Jev input; an automatic hybrid route requires a stdin brief.
 rm -f "$WORK_DIR/called"
 if PATH="$WORK_DIR:$PATH" TYPESAFE_API_KEY='dummy-test-secret' CODEX_BIN=/usr/bin/true \
   "$ROUTER" --route-only --hybrid -c 'api_key=dummy-flag-secret' 'Review this architecture' \
   > "$WORK_DIR/ambiguous-output" 2> "$WORK_DIR/ambiguous-error"; then
-  die 'hybrid route accepted forwarded options without a separate task brief'
+  die 'hybrid routing accepted forwarded arguments without a separate task brief'
 fi
 [[ ! -e "$WORK_DIR/called" ]] || die 'forwarded Codex option was sent to Jev'
 grep -Fq 'needs task text on stdin' "$WORK_DIR/ambiguous-error" || die 'missing safe task-brief guidance'
@@ -217,5 +257,6 @@ printf '%s\n' 'Review this architecture' | MOCK_CALL_MARKER="$WORK_DIR/called" \
   "$ROUTER" --route-only --hybrid -c 'api_key=dummy-flag-secret' > "$WORK_DIR/safe-output"
 [[ -e "$WORK_DIR/called" ]] || die 'Jev did not receive the stdin brief'
 ! grep -Fq 'dummy-flag-secret' "$WORK_DIR/request.json" || die 'forwarded Codex option leaked to Jev'
+grep -Fq 'Review this architecture' "$WORK_DIR/request.json" || die 'stdin task brief was not sent to Jev'
 
 printf '%s\n' 'Global Jev routing contract checks passed.'

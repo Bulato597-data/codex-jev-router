@@ -1,6 +1,6 @@
 # Codex Model Router and Jev Guide
 
-Desktop and CLI setup for macOS • September 26 2026
+Desktop and CLI setup for macOS • September 30 2026
 
 This package helps Codex users choose a model and reasoning effort for a new task. Codex refines the request into a concise brief, Jev evaluates it against a saved model reference and explicit selection criteria, and local rules produce the final recommendation. The aim is the lightest model and effort sufficient for the complete task without sacrificing quality.
 
@@ -100,13 +100,13 @@ Send the revised task instead of “continue.” Codex should refine and route t
 
 Each request sends the task brief, detailed routing criteria, and saved model reference text directly in the request. Jev does not need to open links and is not assumed to remember earlier requests. The catalog contains detailed facts written from official documentation; it is not an exact reproduction of the source pages.
 
-The saved catalog covers GPT-6 Astra, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, and GPT-5.5. GPT-Reserve is excluded. The router offers eligible models as direct choices and asks a separate conditional effort question for each eligible model in the same HTTP call. It reads only the effort answer associated with the chosen model. The local Codex cache supplies availability information when present; the catalog must be maintained as models change.
+The saved catalog covers GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, and GPT-5.5. GPT-Reserve is excluded. The router offers eligible models as direct choices and asks a separate conditional effort question for each eligible model in the same HTTP call. It reads only the effort answer associated with the chosen model. The local Codex cache supplies availability information when present; the catalog must be maintained as models change.
 
 ## Confidence and local rules
 
-The model choice must score at least 0.70. Effort has its own 0.70 floor. If the model qualifies but effort does not, the model can be retained with a disclosed local effort setting, reported as effort-confidence-floor. If model confidence is too low, local model routing applies. High-consequence and heavy-work rules can raise the final route above Jev’s advice.
+The model choice must score at least 0.70. Effort has its own 0.70 floor. If the model qualifies but effort does not, the model can be retained with a disclosed local minimum that favors allowance conservation, reported as effort-confidence-floor. If model confidence is too low, local model routing applies. High-consequence and heavy-work rules can raise the final route above Jev’s advice.
 
-Confidence is the returned Choice score, not a demonstrated probability that the task will succeed. API prices in the catalog do not measure Codex subscription usage. This package makes no guaranteed accuracy or cost-saving claim.
+Confidence is the returned Choice score, not a demonstrated probability that the task will succeed. Jev is instructed to preserve included Codex subscription allowance: prefer GPT-6 Luna at the lowest effort that meets the task’s quality and verification needs, and use Sol or Astra only when their added capability is needed. OpenAI says allowance use varies with model, task, and settings; higher reasoning effort can consume more allowance without guaranteeing a better result. The catalog provides Standard-mode credit rates for all eight models as a directional signal for eligible credit-billed usage: GPT-6 Luna is 2.5 / 0.25 / 12.5 credits per million input / cached-input / output tokens, GPT-6.1 Sol is 50 / 2.5 / 250, and GPT-6 Sol is 50 / 5 / 250. These credit rates do not give an exact per-task conversion for included subscription allowance. API token prices are not used as a proxy for subscription use. This package makes no guarantee of task accuracy or subscription savings. See [OpenAI’s included Work and Codex allowance guidance](https://help.openai.com/en/articles/20001516-managing-usage-with-gpt-6-astra-in-work-and-codex) and the [Codex credit rate card](https://help.openai.com/en/articles/11481834-chatgpt-rate-card-business-enterpriseedu-credit-based-pricing).
 
 ## Troubleshooting
 
@@ -142,6 +142,7 @@ Model catalog: https://developers.openai.com/api/docs/models
 
 - GPT-6 Astra: https://developers.openai.com/api/docs/models/gpt-6-astra
 - GPT-6 Sol: https://developers.openai.com/api/docs/models/gpt-6-sol
+- GPT-6.1 Sol: https://developers.openai.com/api/docs/models/gpt-6.1-sol
 - GPT-6 Luna: https://developers.openai.com/api/docs/models/gpt-6-luna
 - GPT-5.6 Sol: https://developers.openai.com/api/docs/models/gpt-5.6-sol
 - GPT-5.6 Terra: https://developers.openai.com/api/docs/models/gpt-5.6-terra

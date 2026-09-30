@@ -1,24 +1,25 @@
 {
-  "catalog_version": 2,
+  "catalog_version": 3,
   "source": "OpenAI official API model documentation, cross-checked against the local Codex models_cache.json for desktop availability and supported reasoning levels.",
-  "official_documentation_checked_date": "2026-09-26",
+  "official_documentation_checked_date": "2026-09-29",
   "selection_policy": {
     "desktop_default": {
       "model": "gpt-6-luna",
       "effort": "xhigh"
     },
-    "objective": "Choose the least demanding model and reasoning effort that can complete the user's actual task to the required quality. Do not trade away necessary quality to reduce API price. Use stronger models or effort when scope, ambiguity, verification burden, or consequences require them.",
+    "objective": "Choose the least Codex-subscription-usage-consuming model and reasoning effort that can complete the user's task to the required quality. Treat preserving the user's included five-hour and weekly allowance as a primary preference. Prefer GPT-6 Luna at the lowest sufficient effort when it can meet the quality bar; use Sol or Astra only when their additional capability is needed. Do not sacrifice correctness or required verification. Do not use OpenAI API token prices as a proxy for Codex subscription consumption.",
     "task_text": "Use the task text exactly as supplied by Codex after it has clarified and cleaned the user's request. The task may be refined with the user before execution; every material revision must be reflected in the task text sent for routing.",
     "choice_limit": "One Choice offers every documented and currently available model directly. A separate speculative effort Choice for each model offers all its supported efforts in the same request. Only the selected model and its effort answer are used; each Choice is below the 255-option limit.",
-    "detailed_rubric": "This is the router's practical task rubric, not an official OpenAI definition of reasoning-effort labels. Judge the clarified execution brief and relevant project context, not the task's word count or how casually it is phrased. Evaluate these separate axes: (1) scope—one answer or one isolated edit versus several dependent steps, files, components, or systems; (2) ambiguity—whether requirements, inputs, success conditions, or source-of-truth facts are missing or conflict; (3) novelty—routine known pattern versus unfamiliar domain, architecture, or debugging; (4) reasoning load—number of decisions, dependencies, edge cases, and alternatives that must be compared; (5) tool/context load—whether the task needs repository reading, browser research, data analysis, UI inspection, external systems, or large context; (6) verification burden—whether a focused check is enough or correctness depends on multiple integration, security, cross-system, or production checks; (7) consequence and reversibility—whether a mistake is easy to undo or could expose a secret, change access, spend money, corrupt/delete data, affect a customer, or break production. A short request can still be hard when its consequences or hidden dependencies are high; a long request can be routine when it is explicit, repetitive, and low-risk. Routine/bounded example: answer a direct factual question from supplied context, rewrite a paragraph, make one isolated cosmetic change, or inspect one file for a clearly stated fact; the expected work is one or two reasoning steps, little ambiguity, and one simple check at most. Start with GPT-6 Luna at low or medium effort, raising effort only if the brief adds meaningful reasoning or verification. Standard task example: implement a well-specified small feature, fix a contained bug, compare a few sources, or update several related files with a focused verification; this usually needs medium or high effort, and GPT-6 Luna is sufficient only if its documented tool/coding capability and context can meet the quality bar, otherwise choose GPT-6 Sol. Complex task example: a multi-file feature with interacting behavior, an unfamiliar or hard-to-localize bug, broad research across sources, substantial document/data work, or several integration and verification steps; prefer GPT-6 Sol at high or xhigh effort, escalating to Astra when the reasoning spans systems or uncertainty remains substantial. Highest-demand example: system architecture across multiple services, deep security or permission review, high-impact billing/production work, a difficult cross-system incident, large-data reasoning, or work where an error is hard to reverse; choose a strong current-generation model at high effort or above, and use GPT-6 Astra at high or above for heavy architecture, deep audits, difficult cross-system debugging, or large data analysis. File count is evidence, not a mechanical cutoff: a one-file authentication change can be high-consequence, while many mechanical text edits can remain routine. Effort guide: low for clear, direct reasoning with few edge cases; medium for a few linked considerations or routine implementation; high for multi-step decisions, meaningful ambiguity, tools plus verification, or elevated consequences; xhigh for interacting constraints, extensive debugging/research, or high rework risk; max/ultra only when the runtime offers them and the brief truly demands the model's highest sustained reasoning. These are routing heuristics, not guaranteed performance boundaries. Select the least demanding exact model-effort pair that safely satisfies every requirement; do not sacrifice correctness, verification, or the user's quality target to save API-list cost or time, and do not choose a larger pair merely because the request sounds important. Treat published API prices and API feature/effort support as context only: Codex desktop eligibility comes from the live supported model-effort list, and API prices are not Codex subscription charges or Jev's cost. If evidence is insufficient to distinguish neighboring options, prefer the safer sufficient choice and allow the local confidence/safety floor to govern.",
+    "detailed_rubric": "This is the router's practical task rubric, not an official OpenAI definition of reasoning-effort labels. Judge the clarified execution brief and relevant project context, not the task's word count or how casually it is phrased. Evaluate these separate axes: (1) scope—one answer or one isolated edit versus several dependent steps, files, components, or systems; (2) ambiguity—whether requirements, inputs, success conditions, or source-of-truth facts are missing or conflict; (3) novelty—routine known pattern versus unfamiliar domain, architecture, or debugging; (4) reasoning load—number of decisions, dependencies, edge cases, and alternatives that must be compared; (5) tool/context load—whether the task needs repository reading, browser research, data analysis, UI inspection, external systems, or large context; (6) verification burden—whether a focused check is enough or correctness depends on multiple integration, security, cross-system, or production checks; (7) consequence and reversibility—whether a mistake is easy to undo or could expose a secret, change access, spend money, corrupt/delete data, affect a customer, or break production. A short request can still be hard when its consequences or hidden dependencies are high; a long request can be routine when it is explicit, repetitive, and low-risk. Routine/bounded example: answer a direct factual question from supplied context, rewrite a paragraph, make one isolated cosmetic change, or inspect one file for a clearly stated fact; the expected work is one or two reasoning steps, little ambiguity, and one simple check at most. Start with GPT-6 Luna at low or medium effort, raising effort only if the brief adds meaningful reasoning or verification. Standard task example: implement a well-specified small feature, fix a contained bug, compare a few sources, or update several related files with a focused verification; this usually needs medium or high effort, and GPT-6 Luna is sufficient only if its documented tool/coding capability and context can meet the quality bar, otherwise choose GPT-6 Sol. Complex task example: a multi-file feature with interacting behavior, an unfamiliar or hard-to-localize bug, broad research across sources, substantial document/data work, or several integration and verification steps; prefer GPT-6 Sol at high or xhigh effort, escalating to Astra when the reasoning spans systems or uncertainty remains substantial. Highest-demand example: system architecture across multiple services, deep security or permission review, high-impact billing/production work, a difficult cross-system incident, large-data reasoning, or work where an error is hard to reverse; choose a strong current-generation model at high effort or above, and use GPT-6 Astra at high or above for heavy architecture, deep audits, difficult cross-system debugging, or large data analysis. File count is evidence, not a mechanical cutoff: a one-file authentication change can be high-consequence, while many mechanical text edits can remain routine. Effort guide: low for clear, direct reasoning with few edge cases; medium for a few linked considerations or routine implementation; high for multi-step decisions, meaningful ambiguity, tools plus verification, or elevated consequences; xhigh for interacting constraints, extensive debugging/research, or high rework risk; max/ultra only when the runtime offers them and the brief truly demands the model's highest sustained reasoning. These are routing heuristics, not guaranteed performance boundaries. Select the least demanding exact model-effort pair that safely satisfies every requirement; do not sacrifice correctness, verification, or the user's quality target to save API-list cost or time, and do not choose a larger pair merely because the request sounds important. Treat published API prices and API feature/effort support as context only: Codex desktop eligibility comes from the live supported model-effort list, and API prices are not Codex subscription charges or Jev's cost. If evidence is insufficient to distinguish neighboring options, prefer the safer sufficient choice and allow the local confidence/safety floor to govern. Subscription-usage rule: preserving the included Codex allowance is a first-class objective after meeting the quality bar. For a task that GPT-6 Luna can do reliably, prefer Luna even if Sol might also succeed; prefer the lowest sufficient effort. Move to Sol or Astra only for concrete capability, reliability, or verification needs. Minimize unnecessary context, generated output, tools, parallel agents, and long-running work when that does not reduce quality. Higher effort and stronger models can use more allowance; higher effort does not guarantee a better result. Use the Codex credit-rate reference only as a directional comparison for its stated credit-billed scope. Do not use API pricing, or credit rates labeled as exact Plus/Pro included-allowance costs, to predict the user's weekly balance.",
     "model_choice_criteria": {
-      "gpt-6-luna": "Focused, bounded execution: rewriting, summarizing supplied text, direct research with a small clear deliverable, isolated cosmetic edits, mechanical changes, or a contained implementation using a known pattern with explicit requirements. Select when the complete task has few interacting decisions and low rework risk. A broad feature, uncertain defect investigation, consequential authorization review, or system design needs a stronger choice.",
-      "gpt-6-sol": "General implementation and professional execution: build complete features or small apps, coordinate related UI/backend behavior, investigate an uncertain defect, compare evidence, or perform substantive verification. Also select for consequential changes or reviews of access, tenant isolation, credentials, billing, data integrity, or production when scope is contained. Fits work beyond focused Luna tasks that does not require frontier architecture or deep cross-system investigation.",
-      "gpt-6-astra": "Frontier reasoning: design architecture across services or regions, resolve difficult failures across systems, perform a deep security audit, reconcile extensive conflicting evidence, or plan high-impact changes with many interacting constraints. Select when these demands exceed ordinary feature work or a contained consequential repair. Importance alone is insufficient.",
+      "gpt-6-luna": "Focused, bounded execution: rewriting, summarizing supplied text, direct research with a small clear deliverable, isolated cosmetic edits, mechanical changes, or a contained implementation using a known pattern with explicit requirements. Select when the complete task has few interacting decisions and low rework risk. A broad feature, uncertain defect investigation, consequential authorization review, or system design needs a stronger choice. It is the preferred allowance-saving choice for bounded tasks and routine implementation when it can meet the requested quality. OpenAI's Codex credit rate card lists materially lower per-token credit rates for GPT-6 Luna than for Sol or Astra; the exact Plus/Pro included weekly allowance per task is not published.",
+      "gpt-6-sol": "General implementation and professional execution: build complete features or small apps, coordinate related UI/backend behavior, investigate an uncertain defect, compare evidence, or perform substantive verification. Also select for consequential changes or reviews of access, tenant isolation, credentials, billing, data integrity, or production when scope is contained. Fits work beyond focused Luna tasks that does not require frontier architecture or deep cross-system investigation. Use when Luna is not sufficient for the task's coding, investigation, or verification needs. Its Codex credit rates are substantially above Luna's; preserve the allowance by avoiding Sol for routine tasks that Luna can handle.",
+      "gpt-6-astra": "Frontier reasoning: design architecture across services or regions, resolve difficult failures across systems, perform a deep security audit, reconcile extensive conflicting evidence, or plan high-impact changes with many interacting constraints. Select when these demands exceed ordinary feature work or a contained consequential repair. Importance alone is insufficient. Reserve it for tasks that truly need its frontier capability. Its published Codex credit rate is substantially higher than Sol and Luna; a consequential label alone does not justify Astra if Luna or Sol can safely meet the quality bar.",
       "gpt-5.6-sol": "Earlier-generation capable option for complex professional work, coding and tool-heavy agents. Select when the task has a stated compatibility constraint, established evaluation evidence, or a documented capability advantage favoring GPT-5.6 Sol. For equivalent requirements without such evidence, prefer current GPT-6 Sol.",
       "gpt-5.6-terra": "Earlier-generation balanced option for straightforward implementation and debugging. Select when an existing evaluated workflow, compatibility requirement or documented resource constraint favors GPT-5.6 Terra. Otherwise prefer the sufficient current-generation model. Do not infer desktop subscription charges from API prices.",
       "gpt-5.6-luna": "Earlier-generation efficient option for focused, repeatable high-volume work. Select when stated compatibility, workload evaluation or documented resource requirements favor this older Luna. Without a distinguishing requirement, prefer GPT-6 Luna for the same bounded work.",
-      "gpt-5.5": "Legacy capable model for complex coding, long-context retrieval, grounded assistants and tool-heavy agents. Select when this task specifically benefits from a documented capability, established behavior or compatibility requirement of GPT-5.5. Otherwise select the sufficient current-generation alternative."
+      "gpt-5.5": "Legacy capable model for complex coding, long-context retrieval, grounded assistants and tool-heavy agents. Select when this task specifically benefits from a documented capability, established behavior or compatibility requirement of GPT-5.5. Otherwise select the sufficient current-generation alternative.",
+      "gpt-6.1-sol": "Current-generation Sol model for complex coding, computer use, professional work, and multi-step agent tasks. OpenAI reports near-Astra results on selected evaluations; use those capability results only when relevant to this task. Its credit-billed Codex rate is the same as GPT-6 Sol for input/output and half GPT-6 Sol for cached input, but that rate is not an exact Plus/Pro included-weekly-allowance prediction. API prices are irrelevant to the Codex subscription allowance. Choose it over Luna only when its added capability is needed."
     },
     "effort_choice_criteria": {
       "low": "Direct work: one clear transformation, lookup, or isolated mechanical/cosmetic edit with a known solution and a simple check. No diagnosis of an unknown cause and no interacting implementation decisions.",
@@ -28,15 +29,63 @@
       "max": "Exceptional sustained reasoning: broad novel investigation with numerous coupled unknowns, exhaustive adversarial analysis or repeated documented failure of xhigh on this same problem. Reserve for concrete demands beyond a normal deep audit or system design.",
       "ultra": "Highest sustained reasoning: exceptionally difficult, open-ended work with demonstrated failure of lower reasoning budgets or an explicit requirement for exhaustive frontier analysis across many coupled systems. Ordinary architecture, consequential work or a long prompt alone is insufficient."
     },
-    "confidence_policy": "Require model Choice confidence of at least 0.70 to accept the model. Independently require selected effort Choice confidence of at least 0.70 to accept that effort. If only effort is uncertain, retain the qualified model and apply the local uncertain_effort_defaults floor, never lowering the advised effort. Expose model and effort confidence and distributions separately. Neither confidence is a measured probability of successful task completion. Ignore uncertainty on unused effort branches.",
+    "confidence_policy": "Require model Choice confidence of at least 0.70 to accept the model. Independently require selected effort Choice confidence of at least 0.70 to accept that effort. If only effort is uncertain, retain the qualified model and apply its local uncertain_effort_defaults minimum; do not rely on the unqualified effort answer. Local sensitive-risk and heavy-context floors can raise the final effort when the task requires it. Expose model and effort confidence and distributions separately. Neither confidence is a measured probability of successful task completion. Ignore uncertainty on unused effort branches.",
     "uncertain_effort_defaults": {
-      "gpt-6-astra": "xhigh",
-      "gpt-6-sol": "high",
+      "gpt-6-astra": "high",
+      "gpt-6-sol": "medium",
       "gpt-6-luna": "medium",
-      "gpt-5.6-sol": "high",
-      "gpt-5.6-terra": "high",
+      "gpt-5.6-sol": "medium",
+      "gpt-5.6-terra": "medium",
       "gpt-5.6-luna": "medium",
-      "gpt-5.5": "high"
+      "gpt-5.5": "medium",
+      "gpt-6.1-sol": "medium"
+    },
+    "codex_subscription_usage_reference": "OpenAI says included Work and Codex allowance depends on model, task size and complexity, input and output tokens, reasoning effort, speed/mode, tools, and work performed; larger context/output, higher reasoning effort, Fast mode, and multi-step tasks can consume more. Lower effort can make allowance go further, while higher effort does not always improve results. Exact per-task or per-model consumption for the Plus/Pro included weekly allowance is not published. Check Settings > Usage for current allowance and reset times. The Codex/Work credit rate card applies to eligible credit-billed usage; it is a directional model-cost signal, not an exact estimate of the included weekly plan meter. GPT-6.1 Sol is estimated at 2-15 credits for a typical task under credit billing. Codex does not charge credits for cache writes. Reasoning effort is not a separate rate-card row; it affects total usage through tokens/work produced. Ultra can use maximum reasoning and may add agents. Fast mode uses included allowance at 2.5x the same model Standard rate; Astra Ultrafast uses it at 8x. Do not use API token prices as a proxy for Codex subscription consumption.",
+    "codex_credit_rate_card": {
+      "unit": "credits per 1 million input / cached-input / output tokens",
+      "scope": "Eligible Codex and ChatGPT Work activity billed under a credit-based rate card. For Plus/Pro plans, included usage is used first; these figures price eligible add-on credits after the included limit and are not a published per-task conversion for the included weekly allowance.",
+      "rates": {
+        "gpt-6-luna": {
+          "input": 2.5,
+          "cached_input": 0.25,
+          "output": 12.5
+        },
+        "gpt-6.1-sol": {
+          "input": 50,
+          "cached_input": 2.5,
+          "output": 250
+        },
+        "gpt-6-sol": {
+          "input": 50,
+          "cached_input": 5,
+          "output": 250
+        },
+        "gpt-6-astra": {
+          "input": 250,
+          "cached_input": 25,
+          "output": 1250
+        },
+        "gpt-5.6-luna": {
+          "input": 5,
+          "cached_input": 0.5,
+          "output": 30
+        },
+        "gpt-5.6-terra": {
+          "input": 50,
+          "cached_input": 5,
+          "output": 300
+        },
+        "gpt-5.6-sol": {
+          "input": 100,
+          "cached_input": 10,
+          "output": 500
+        },
+        "gpt-5.5": {
+          "input": 125,
+          "cached_input": 12.5,
+          "output": 750
+        }
+      }
     }
   },
   "models": [
@@ -216,6 +265,114 @@
       "official_model_page": "https://developers.openai.com/api/docs/models/gpt-6-sol",
       "official_guidance": "https://developers.openai.com/api/docs/guides/latest-model?model=gpt-6-sol",
       "default_snapshot": "gpt-6-sol",
+      "max_input_tokens": 922000,
+      "reasoning_token_support": true,
+      "api_endpoints_supported": [
+        "v1/chat/completions",
+        "v1/responses",
+        "v1/batch"
+      ],
+      "api_endpoints_unsupported": [
+        "v1/live/sessions",
+        "v1/realtime",
+        "v1/realtime/translations",
+        "v1/realtime/transcription_sessions",
+        "v1/assistants",
+        "v1/fine-tuning",
+        "v1/embeddings",
+        "v1/images/generations",
+        "v1/videos",
+        "v1/images/edits",
+        "v1/audio/speech",
+        "v1/audio/transcriptions",
+        "v1/audio/translations",
+        "v1/moderations",
+        "v1/completions (legacy)"
+      ],
+      "api_features": [
+        "streaming",
+        "structured outputs",
+        "function calling",
+        "file search",
+        "image input",
+        "web search",
+        "prompt caching"
+      ],
+      "rate_limits_note": "The model page lists API rate limits by account usage tier; the applicable limits depend on the account tier and do not measure model capability or Codex subscription limits.",
+      "api_pricing_rules": [
+        "For prompts above 272,000 input tokens, input and cache rates are 2x and output is 1.5x for the full request.",
+        "Cache writes cost 1.25x uncached input. Regional processing adds 10% where available; EU data residency is Standard-processing only.",
+        "Batch and Flex are 50% of Standard rates; Fast mode is 2x the applicable rates."
+      ]
+    },
+    {
+      "id": "gpt-6.1-sol",
+      "display_name": "GPT-6.1 Sol",
+      "generation": "current",
+      "official_description": "Near-Astra performance for complex work at a lower cost.",
+      "strengths": [
+        "complex coding",
+        "computer use",
+        "professional work",
+        "multi-step agentic tasks",
+        "near-Astra capability at lower API cost"
+      ],
+      "tradeoffs": [
+        "GPT-6 Astra remains the stronger choice for the hardest scientific research tasks",
+        "API list prices do not measure Codex subscription usage"
+      ],
+      "input_modalities": [
+        "text",
+        "image"
+      ],
+      "output_modalities": [
+        "text"
+      ],
+      "context_window_tokens": 1050000,
+      "max_output_tokens": 128000,
+      "knowledge_cutoff": "2026-04-30",
+      "codex_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max",
+        "ultra"
+      ],
+      "api_efforts": [
+        "low",
+        "medium",
+        "high",
+        "xhigh",
+        "max"
+      ],
+      "api_price_usd_per_1m_tokens": {
+        "input": 2,
+        "cached_input": 0.1,
+        "output": 10,
+        "cache_write": 2.5
+      },
+      "responses_tools": [
+        "web search",
+        "file search",
+        "computer use",
+        "code interpreter",
+        "hosted shell",
+        "apply patch",
+        "skills",
+        "MCP",
+        "tool search",
+        "image generation"
+      ],
+      "limitations": [
+        "text output only",
+        "does not support audio or video input",
+        "API list price is not a measure of Codex subscription usage"
+      ],
+      "official_documentation_text": "GPT-6.1 Sol is an upgrade to GPT-6 Sol. OpenAI describes it as delivering near-Astra performance for complex coding, computer use, and professional work at lower cost. OpenAI reports that it approaches GPT-6 Astra on several tested tasks; the announcement reports benchmark-specific results and does not guarantee equivalent performance for every task. It supports text and image input and text output. Its context window is 1,050,000 tokens and maximum output is 128,000 tokens; its listed knowledge cutoff is 2026-04-30. The API supports reasoning.effort values low, medium (default), high, xhigh, and max. The Codex desktop effort choices currently visible in this installation come from its runtime model cache and are not inferred from API support. Standard API text-token prices per million are $2 input, $0.10 cached input, $2.50 cache writes, and $10 output. These are API prices, not Codex subscription charges. GPT-6.1 Sol supports the Responses API with tools including web search, file search, computer use, code interpreter, hosted shell, apply patch, skills, MCP, tool search, and image generation. OpenAI says it is available in Codex and ChatGPT Work for supported paid plans; it is not yet available in ChatGPT Chat as of the announcement.",
+      "official_model_page": "https://developers.openai.com/api/docs/models/gpt-6.1-sol",
+      "official_guidance": "https://openai.com/index/introducing-gpt-6-1-sol/",
+      "default_snapshot": "gpt-6.1-sol",
       "max_input_tokens": 922000,
       "reasoning_token_support": true,
       "api_endpoints_supported": [
@@ -790,10 +947,17 @@
   "choice_allowlist": [
     "gpt-6-astra",
     "gpt-6-sol",
+    "gpt-6.1-sol",
     "gpt-6-luna",
     "gpt-5.6-sol",
     "gpt-5.6-terra",
     "gpt-5.6-luna",
     "gpt-5.5"
-  ]
+  ],
+  "codex_subscription_usage_sources": {
+    "checked_date": "2026-09-30",
+    "included_plan_usage": "https://help.openai.com/en/articles/20001516-managing-usage-with-gpt-6-astra-in-work-and-codex",
+    "credit_rate_card": "https://help.openai.com/en/articles/11481834-chatgpt-rate-card-business-enterpriseedu-credit-based-pricing",
+    "personal_credit_usage": "https://help.openai.com/en/articles/12642688-using-credits-for-flexible-usage-in-chatgpt-personal-plans"
+  }
 }

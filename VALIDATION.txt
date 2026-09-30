@@ -1,8 +1,10 @@
-Package validation
+Public source validation — 2026-09-30
 
-Offline routing contract checks: passed after public safety edits.
-Local bridge checks: 6 passed, 0 failed after public safety edits.
-Installer: passed in a temporary home directory.
-Guide: five rendered pages inspected after metadata cleanup.
-Release: all 14 archive members, nested DOCX parts, and SHA256 hashes checked.
-No live Jev request or native Desktop acceptance test was performed during packaging.
+Shell syntax checks: passed for codex-route, install-global-jev-bridge.sh, and test-hybrid-router.sh.
+Offline routing contract checks: passed. The mocked request verifies GPT-6.1 Sol as a direct model choice, all eight documented models, allowance-conservation instructions and Codex credit rates, independent effort confidence, local safety floors, and fallback behavior.
+Hybrid CLI input boundary: passed. Automatic hybrid routing requires a separate stdin task brief; Codex flag values are not sent to Jev, and the regression test confirms a dummy credential-like flag value is absent from the request.
+Local bridge checks: 6 passed, 0 failed.
+Catalog and guide: eight model specifications are present; GPT-Reserve is excluded. README and Word guide include GPT-6.1 Sol, distinguish eligible credit-billed rates from included weekly subscription allowance, and link the official OpenAI references.
+SHA256SUMS: verified against every listed package file.
+
+No live Jev request, exact Plus/Pro per-task allowance conversion, actual subscription consumption, native Desktop acceptance test, or new GitHub release asset was tested or produced.
