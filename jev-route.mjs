@@ -34,31 +34,40 @@ function readSettings() {
 }
 
 const settings = readSettings();
-const allowedJevStatuses = new Set(['not_requested', 'credential_missing', 'request_failed', 'malformed_choice', 'choice_below_confidence', 'choice_routed']);
-const isModelChoice = (value) => typeof value === 'string' && /^gpt-[0-9]+(?:\.[0-9]+)?(?:-(?:astra|sol|luna|terra))?$/.test(value);
-const allowedEfforts = new Set(['low', 'medium', 'high', 'xhigh', 'max', 'ultra']);
+const allowedJevStatuses = new Set(['not_requested', 'credential_missing', 'request_failed', 'malformed_noul_response', 'nouls_composed']);
+const requiredNoulIds = ['complete_feature', 'complex_agentic_coding', 'computer_use_workflow', 'cross_system_verification', 'data_integrity_verification', 'deep_security_audit', 'extensive_conflicting_data', 'frontier_architecture', 'frontier_debugging', 'integration_verification', 'security_verification', 'unknown_cause'];
+
+function parseNoulDetails(text) {
+  if (!text) return undefined;
+  const value = JSON.parse(text);
+  const isProbability = (number) => typeof number === 'number' && Number.isFinite(number) && number >= 0 && number <= 1;
+  if (value.basis !== 'independent_noul_questions_composed_locally'
+    || !isProbability(value.threshold_policy?.yes_at_or_above)
+    || !isProbability(value.threshold_policy?.no_at_or_below)
+    || value.threshold_policy.no_at_or_below >= value.threshold_policy.yes_at_or_above
+    || typeof value.threshold_policy.uncertain !== 'string'
+    || !value.nouls || typeof value.nouls !== 'object' || Array.isArray(value.nouls)
+    || JSON.stringify(Object.keys(value.nouls).sort()) !== JSON.stringify(requiredNoulIds)
+    || !Object.values(value.nouls).every(isProbability)) {
+    throw new Error('The local router returned invalid Noul details.');
+  }
+  return value;
+}
 
 function validateRouteResult(result) {
-  const lane = result?.recommendation?.lane;
-  const choice = result?.jev?.choice;
-  const choiceEffort = result?.jev?.effort;
   const status = result?.jev?.status;
   const verified = result?.jev?.verified;
-  const acceptedChoiceStatuses = new Set(['choice_below_confidence', 'choice_routed']);
-  if (result?.status !== 'routed' || !['luna', 'terra', 'sol', 'astra'].includes(lane)
+  const validNoul = status === 'nouls_composed';
+  if (result?.status !== 'routed' || !['luna', 'terra', 'sol', 'astra'].includes(result?.recommendation?.lane)
     || typeof verified !== 'boolean' || !allowedJevStatuses.has(status)
-    || verified !== acceptedChoiceStatuses.has(status) || typeof result?.route?.source !== 'string'
+    || verified !== validNoul || typeof result?.route?.source !== 'string'
     || typeof result?.recommendation?.model !== 'string' || typeof result?.recommendation?.effort !== 'string'
     || (result.route.override !== null && typeof result.route.override !== 'string')
-    || (result.jev.verified && !isModelChoice(choice))
-    || (result.jev.verified && !allowedEfforts.has(choiceEffort))
-    || (result.jev.verified && (typeof result.jev.model !== 'string' || typeof result.jev.confidence !== 'number' || result.jev.confidence < 0 || result.jev.confidence > 1))
-    || (!result.jev.verified && (choice !== null || choiceEffort !== null))) throw new Error('Jev bridge returned an invalid response.');
-  if (result.jev.confidence_details !== undefined) {
-    const details = parseConfidenceDetails(JSON.stringify(result.jev.confidence_details));
-    if (!verified || result.jev.confidence !== details.model) {
-      throw new Error('Jev bridge returned inconsistent confidence details.');
-    }
+    || (verified && (typeof result.jev.model !== 'string' || !result.jev.nouls || !result.jev.details))
+    || (!verified && (result.jev.model !== null || result.jev.nouls !== null))) throw new Error('Jev bridge returned an invalid response.');
+  if (verified) {
+    const details = parseNoulDetails(JSON.stringify(result.jev.details));
+    if (JSON.stringify(result.jev.nouls) !== JSON.stringify(details.nouls)) throw new Error('Jev bridge returned inconsistent Noul details.');
   }
   return result;
 }
@@ -117,21 +126,6 @@ function requestThroughLocalSocket(task) {
   });
 }
 
-function parseConfidenceDetails(text) {
-  if (!text) return undefined;
-  const value = JSON.parse(text);
-  const isProbability = (number) => typeof number === 'number' && Number.isFinite(number) && number >= 0 && number <= 1;
-  const isDistribution = (distribution) => distribution && typeof distribution === 'object'
-    && !Array.isArray(distribution) && Object.keys(distribution).length > 0
-    && Object.values(distribution).every(isProbability);
-  if (value.basis !== 'model_choice_with_separate_effort_gate'
-    || !isProbability(value.model) || !isProbability(value.effort)
-    || !isDistribution(value.model_probabilities) || !isDistribution(value.effort_probabilities)) {
-    throw new Error('The local router returned invalid confidence details.');
-  }
-  return value;
-}
-
 function parseRouterOutput(output) {
   const fields = Object.fromEntries(
     output
@@ -145,27 +139,24 @@ function parseRouterOutput(output) {
     throw new Error('The local router returned an incomplete route.');
   }
   const hybrid = fields.hybrid ?? '';
-  const verified = hybrid.startsWith('jev-advisory;');
+  const verified = hybrid.startsWith('jev-noul-composition;');
   const jevStatus = fields.jev_status ?? 'not_requested';
-  if (!allowedJevStatuses.has(jevStatus) || (verified && !['choice_below_confidence', 'choice_routed'].includes(jevStatus)) || (!verified && ['choice_below_confidence', 'choice_routed'].includes(jevStatus))) throw new Error('The local router returned an invalid Jev status.');
-  const choice = verified ? hybrid.match(/(?:^|;)choice=([^;]+)/)?.[1] ?? null : null;
-  const choiceEffort = verified ? hybrid.match(/(?:^|;)effort=([^;]+)/)?.[1] ?? null : null;
+  if (!allowedJevStatuses.has(jevStatus) || verified !== (jevStatus === 'nouls_composed')) throw new Error('The local router returned an invalid Jev status.');
   const returnedModel = hybrid.match(/(?:^|;)model=([^;]+)/)?.[1] ?? null;
-  const confidenceText = hybrid.match(/(?:^|;)confidence=([0-9]+(?:\.[0-9]+)?)/)?.[1];
+  const details = verified && fields.jev_diagnostics ? parseNoulDetails(fields.jev_diagnostics) : null;
+  if (verified && !details) throw new Error('The local router omitted Noul details.');
   return {
     status: 'routed',
     jev: {
       verified,
       status: jevStatus,
-      choice,
-      effort: choiceEffort,
       model: verified ? returnedModel : null,
-      confidence: verified && confidenceText !== undefined ? Number(confidenceText) : null,
-      ...(verified && fields.jev_diagnostics ? { confidence_details: parseConfidenceDetails(fields.jev_diagnostics) } : {}),
+      nouls: verified ? details.nouls : null,
+      details,
     },
     recommendation: { lane, model, effort },
     route: {
-      source: fields.route_source ?? (verified ? 'jev-choice' : 'local'),
+      source: fields.route_source ?? (verified ? 'jev-noul-composed' : 'local'),
       override: fields.route_override ?? null,
     },
     reason: fields.reason ?? 'Local router recommendation.',

@@ -1,10 +1,10 @@
 Public source validation — 2026-09-30
 
 Shell syntax checks: passed for codex-route, install-global-jev-bridge.sh, and test-hybrid-router.sh.
-Offline routing contract checks: passed. The mocked request verifies GPT-6.1 Sol as a direct model choice, all eight documented models, allowance-conservation instructions and Codex credit rates, independent effort confidence, local safety floors, and fallback behavior.
-Hybrid CLI input boundary: passed. Automatic hybrid routing requires a separate stdin task brief; Codex flag values are not sent to Jev, and the regression test confirms a dummy credential-like flag value is absent from the request.
-Local bridge checks: 6 passed, 0 failed.
-Catalog and guide: eight model specifications are present; GPT-Reserve is excluded. README and Word guide include GPT-6.1 Sol, distinguish eligible credit-billed rates from included weekly subscription allowance, and link the official OpenAI references.
+Offline routing contract checks: passed. The mocked TypeSafe request verifies twelve independent Noul questions with explicit true/false criteria, configured probability thresholds, local deterministic model/effort composition, GPT-6.1 Sol selection, allowance-conservation guidance, and retained sensitive/heavy local floors.
+Noul boundaries: passed at the inclusive 0.30 negative and 0.70 positive thresholds; the middle band routes to the configured conservative tier.
+Local bridge checks: 6 passed, 0 failed. The bridge validates and preserves the exact twelve Noul probabilities without inventing a confidence field.
+Catalog and guide: eight model specifications are present; GPT-Reserve is excluded. README, AGENTS_TEMPLATE.md, and the Word guide explain the atomic Noul architecture, uncertainty bands, GPT-6.1 Sol, and the limits of Codex subscription usage estimates.
 SHA256SUMS: verified against every listed package file.
 
 No live Jev request, exact Plus/Pro per-task allowance conversion, actual subscription consumption, native Desktop acceptance test, or new GitHub release asset was tested or produced.

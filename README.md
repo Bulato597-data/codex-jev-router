@@ -2,21 +2,21 @@
 
 Desktop and CLI setup for macOS • September 30 2026
 
-This package helps Codex users choose a model and reasoning effort for a new task. Codex refines the request into a concise brief, Jev evaluates it against a saved model reference and explicit selection criteria, and local rules produce the final recommendation. The aim is the lightest model and effort sufficient for the complete task without sacrificing quality.
+This package helps Codex users choose a model and reasoning effort for a new task. Codex refines the request into a concise brief, Jev evaluates independent, explicitly defined Noul statements against the task and saved model reference, and deterministic local rules combine those probabilities into the final recommendation. The aim is the lightest model and effort sufficient for the complete task without sacrificing quality.
 
 ## How the Desktop workflow works
 
 1. Send a new actionable task in a local Codex Desktop chat. Codex prepares the brief without expanding your scope and sends it once to the installed Jev helper.
 
-2. When a confidence-qualified final Jev route differs from the active model or effort, Codex reports the recommendation and ends its turn. It performs no task research, file reads, edits, or implementation while waiting. If the active selection is unknown, the instruction also requires a pause for confirmation.
+2. When a validated set of Jev Noul answers is composed into a final route that differs from the active model or effort, Codex reports the recommendation and ends its turn. It performs no task research, file reads, edits, or implementation while waiting. If the active selection is unknown, the instruction also requires a pause for confirmation.
 
 3. Open the Desktop model picker. Select the final recommended model and reasoning effort, then send “continue.” Codex resumes the same task without another Jev call unless the task materially changes.
 
-4. If the accepted route already matches the active selection, work continues. If Jev is unavailable, malformed, or below the model confidence floor, the local policy continues without asking you to switch.
+4. If the composed route already matches the active selection, work continues. If Jev is unavailable or returns malformed answers, the local policy continues without asking you to switch.
 
 ## What the pause looks like
 
-Illustrative output only: Jev recommends GPT-6 Sol, High. Final recommendation: GPT-6 Sol, High. Model confidence: 0.91. Effort confidence: 0.87. Local override: none. Select GPT-6 Sol and High in the Desktop picker, then say “continue.”
+Illustrative output only: Jev reports `complex_agentic_coding: 0.91`. Local composition selects GPT-6.1 Sol, High. Local override: none. Select GPT-6.1 Sol and High in the Desktop picker, then say “continue.” Noul values are probabilities for their stated facts, not confidence scores.
 
 ## Scope and limits
 
@@ -48,7 +48,7 @@ bash ./install-global-jev-bridge.sh
 
 4. The supplied instruction uses GPT-6 Luna at Extra High as the starter preference. Select that default in your own Desktop settings if available. The installer does not change your Desktop default or active model.
 
-5. Start a fresh local chat so it loads the global instruction, then try a real task. Confirm the chat displays both the model and reasoning effort and stops when the qualified route differs. Also try another project to check instruction loading there.
+5. Start a fresh local chat so it loads the global instruction, then try a real task. Confirm the chat displays both the model and reasoning effort and stops when a composed route differs. Also try another project to check instruction loading there.
 
 # Use the helper and CLI
 
@@ -58,7 +58,7 @@ bash ./install-global-jev-bridge.sh
 printf '%s\n' 'Build a local project board with saved tasks' | ~/.local/bin/jev-route
 ```
 
-The JSON result separates Jev’s choice from the final recommendation. A valid typed result has jev.verified true, but that alone does not mean the confidence floor was met. route.source equal to jev-choice identifies a qualified Jev route. Inspect recommendation.model, recommendation.effort, route.override, and jev.confidence_details.
+The JSON result separates validated Jev Noul answers from the final recommendation. `jev.verified: true` means every expected atomic answer passed schema validation; it does not mean the selected route is likely to succeed. Inspect `jev.nouls`, `jev.details.threshold_policy`, `recommendation.model`, `recommendation.effort`, `route.source`, and `route.override`.
 
 ## Preview a CLI recommendation
 
@@ -98,21 +98,21 @@ Send the revised task instead of “continue.” Codex should refine and route t
 
 ## What Jev receives
 
-Each request sends the task brief, detailed routing criteria, and saved model reference text directly in the request. Jev does not need to open links and is not assumed to remember earlier requests. The catalog contains detailed facts written from official documentation; it is not an exact reproduction of the source pages.
+Each request sends the task brief, explicit criteria for twelve independent Noul questions, the deterministic composition rubric, and saved model reference text directly in the request. Jev does not need to open links and is not assumed to remember earlier requests. The catalog contains detailed facts written from official documentation; it is not an exact reproduction of the source pages.
 
-The saved catalog covers GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, and GPT-5.5. GPT-Reserve is excluded. The router offers eligible models as direct choices and asks a separate conditional effort question for each eligible model in the same HTTP call. It reads only the effort answer associated with the chosen model. The local Codex cache supplies availability information when present; the catalog must be maintained as models change.
+The saved catalog covers GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, and GPT-5.5. GPT-Reserve is excluded. In one HTTP call, Jev evaluates twelve independent Noul questions in parallel against the same task state. Local code applies the explicit thresholds and composition table; Jev does not select a model or effort. The local Codex cache supplies availability information when present; the catalog must be maintained as models change.
 
-## Confidence and local rules
+## Noul thresholds and local rules
 
-The model choice must score at least 0.70. Effort has its own 0.70 floor. If the model qualifies but effort does not, the model can be retained with a disclosed local minimum that favors allowance conservation, reported as effort-confidence-floor. If model confidence is too low, local model routing applies. High-consequence and heavy-work rules can raise the final route above Jev’s advice.
+A Noul value is the 0–1 probability that its one stated condition is true. Values at or above 0.70 count as positive; values at or below 0.30 count as negative; the middle band is uncertain and routes to GPT-6 Sol at medium unless a higher-priority positive signal applies. These are initial router policy thresholds, not TypeSafe-provided confidence scores or calibrated success probabilities. The composition table selects Astra for positive frontier signals, GPT-6.1 Sol for its complex-coding or computer-use signal, Sol for standard substantial-work signals, and Luna when all signals are negative. Deterministic local classification and sensitive/heavy safety floors remain final.
 
-Confidence is the returned Choice score, not a demonstrated probability that the task will succeed. Jev is instructed to preserve included Codex subscription allowance: prefer GPT-6 Luna at the lowest effort that meets the task’s quality and verification needs, and use Sol or Astra only when their added capability is needed. OpenAI says allowance use varies with model, task, and settings; higher reasoning effort can consume more allowance without guaranteeing a better result. The catalog provides Standard-mode credit rates for all eight models as a directional signal for eligible credit-billed usage: GPT-6 Luna is 2.5 / 0.25 / 12.5 credits per million input / cached-input / output tokens, GPT-6.1 Sol is 50 / 2.5 / 250, and GPT-6 Sol is 50 / 5 / 250. These credit rates do not give an exact per-task conversion for included subscription allowance. API token prices are not used as a proxy for subscription use. This package makes no guarantee of task accuracy or subscription savings. See [OpenAI’s included Work and Codex allowance guidance](https://help.openai.com/en/articles/20001516-managing-usage-with-gpt-6-astra-in-work-and-codex) and the [Codex credit rate card](https://help.openai.com/en/articles/11481834-chatgpt-rate-card-business-enterpriseedu-credit-based-pricing).
+TypeSafe’s [Confidence guide](https://docs.typesafe.ai/confidence) explains that Choice and Score confidence comes from their output distributions; Noul does not return confidence. Its [coding-agents guide](https://docs.typesafe.ai/introduction/coding-agents) describes Jev as a structured decision component used inside a coding agent, not a replacement for the coding-agent model. The router uses Noul probabilities only for the stated independent conditions, not as a demonstrated probability that the task will succeed. Local composition is explicit so the subscription-allowance preference can be inspected and changed in code. The router preserves included Codex subscription allowance: prefer GPT-6 Luna at the lowest effort that meets the task’s quality and verification needs, and use Sol or Astra only when their added capability is needed. OpenAI says allowance use varies with model, task, and settings; higher reasoning effort can consume more allowance without guaranteeing a better result. The catalog provides Standard-mode credit rates for all eight models as a directional signal for eligible credit-billed usage: GPT-6 Luna is 2.5 / 0.25 / 12.5 credits per million input / cached-input / output tokens, GPT-6.1 Sol is 50 / 2.5 / 250, and GPT-6 Sol is 50 / 5 / 250. These credit rates do not give an exact per-task conversion for included subscription allowance. API token prices are not used as a proxy for subscription use. This package makes no guarantee of task accuracy or subscription savings. See [OpenAI’s included Work and Codex allowance guidance](https://help.openai.com/en/articles/20001516-managing-usage-with-gpt-6-astra-in-work-and-codex) and the [Codex credit rate card](https://help.openai.com/en/articles/11481834-chatgpt-rate-card-business-enterpriseedu-credit-based-pricing).
 
 ## Troubleshooting
 
 No Jev recommendation: check Node.js, jq, curl, the Keychain service and account, and credential-file precedence. An inaccessible login keychain or network failure can produce a local fallback. Do not print your credential while diagnosing.
 
-No Desktop pause: inspect route.source first. Fallbacks and matching accepted routes intentionally continue. For a qualified differing route, confirm a fresh chat loaded ~/.codex/AGENTS.md and that no conflicting instruction overrides it.
+No Desktop pause: inspect route.source first. Fallbacks and matching accepted routes intentionally continue. For a differing composed route, confirm a fresh chat loaded ~/.codex/AGENTS.md and that no conflicting instruction overrides it.
 
 Model unavailable: select an available model explicitly and update the catalog and policy before relying on automatic routing. A cache is not proof of current entitlement.
 
