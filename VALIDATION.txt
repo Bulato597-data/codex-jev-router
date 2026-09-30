@@ -7,4 +7,7 @@ Local bridge checks: 6 passed, 0 failed. The bridge validates and preserves the 
 Catalog and guide: eight model specifications are present; GPT-Reserve is excluded. README, AGENTS_TEMPLATE.md, and the Word guide explain the atomic Noul architecture, uncertainty bands, GPT-6.1 Sol, and the limits of Codex subscription usage estimates.
 SHA256SUMS: verified against every listed package file.
 
-No live Jev request, exact Plus/Pro per-task allowance conversion, actual subscription consumption, native Desktop acceptance test, or new GitHub release asset was tested or produced.
+Live Jev smoke checks: 12 safe prompts were sent through the real API. Every request returned Jev 1.13.0 and all twelve Noul probabilities. The examples exercised all twelve criteria, including default/Luna, contained unknown-cause/Sol, GUI and multi-step coding/GPT-6.1 Sol, standard verification/Sol, frontier architecture and deep audit/Astra, and two frontier signals/Astra xhigh. A contained unknown bug initially hit an overly broad local Astra floor; the floor was narrowed to cross-system failures and the contained case was rechecked at GPT-6 Sol. These examples verify request/response and composition behavior, not statistical calibration of thresholds.
+Live call usage metadata: 7,244–7,267 input tokens and 244 output tokens per request. This is TypeSafe API token usage, not a measured conversion to ChatGPT subscription allowance.
+
+Exact Plus/Pro per-task allowance conversion, actual subscription consumption, native Desktop acceptance test, and a new GitHub release asset were not tested or produced.

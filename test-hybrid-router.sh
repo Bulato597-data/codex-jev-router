@@ -141,6 +141,15 @@ for task in \
   assert_field "$output" route_override heavy-context-floor
 done
 
+# A contained unknown bug follows Jev's standard-work signal; the local
+# frontier floor is reserved for failures that span systems or services.
+write_response; set_noul unknown_cause 0.98
+output="$(run_route 'Find the cause of an unknown defect inside one self-contained function.')"
+assert_field "$output" model gpt-6-sol
+assert_field "$output" effort high
+assert_field "$output" route_override ''
+write_response
+
 # Context words in a read-only repository summary do not count as live or
 # sensitive actions by themselves.
 for task in \

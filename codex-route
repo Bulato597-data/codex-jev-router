@@ -291,7 +291,7 @@ has_astra_signal() {
     return 0
   fi
 
-  if [[ "$text" =~ (intermittent|occasionally|delayed[[:space:]-]?events?|out[[:space:]-]?of[[:space:]-]?order|race[[:space:]-]?condition|deadlock|cascading[[:space:]-]?retry|distributed|cross[[:space:]-]?service|multi[[:space:]-]?service|multiple[[:space:]-]?workers?|difficult) ]] &&
+  if [[ "$text" =~ (delayed[[:space:]-]?events?|out[[:space:]-]?of[[:space:]-]?order|race[[:space:]-]?condition|deadlock|cascading[[:space:]-]?retry|distributed|cross[[:space:]-]?service|multi[[:space:]-]?service|multiple[[:space:]-]?workers?|event[[:space:]-]?bus|across([[:space:][:alnum:]_-]{1,32})(systems?|services?|workers?|consumers?)) ]] &&
      [[ "$text" =~ (trace|investigate|diagnose|debug|inspect|failure|events?|workers?|services?|retry|ordering) ]]; then
     MATCH_REASON='difficult cross-system debugging detected'
     return 0
