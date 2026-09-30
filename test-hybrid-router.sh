@@ -26,10 +26,11 @@ printf 'called\n' >> "$MOCK_CALL_MARKER"
 jq -e --arg task "$MOCK_EXPECT_TASK" --slurpfile source "$MOCK_SOURCE_CATALOG" '
   . as $request |
   .model == "jev-latest" and .state.task == $task and
+  (.state.task_context_boundary | contains("Jev has no memory") and contains("full goal scope") and contains("only the task text")) and
   (.state.routing_criteria | contains("independent")) and
   (.state.routing_criteria | contains("least allowance-consuming sufficient model and effort")) and
   (.state.official_model_documentation_text | contains("not a published per-task conversion for the included weekly allowance")) and
-  (.questions | length == 12) and
+  (.questions | length == 15) and
   all($source[0].selection_policy.noul_questions[];
     . as $q | $request.questions[$q.id].type == "noul" and
     $request.questions[$q.id].instructions == $q.instructions and
@@ -86,6 +87,33 @@ write_response; set_noul computer_use_workflow 0.91
 output="$(run_route 'Complete a multi-step task through a graphical application.')"
 assert_field "$output" model gpt-6.1-sol
 assert_field "$output" effort high
+
+# Long duration or several independent tasks alone are not complexity.
+write_response; set_noul multi_phase_goal 0.91
+output="$(run_route 'Track three independent routine work items over the next quarter.')"
+assert_field "$output" model gpt-6-luna
+write_response; set_noul incomplete_goal_context 0.91
+output="$(run_route 'Continue the current phase of my long-running goal.')"
+assert_field "$output" model gpt-6-sol
+assert_field "$output" effort medium
+write_response; set_noul incomplete_goal_context 0.91; set_noul frontier_architecture 0.91
+output="$(run_route 'Continue the current phase of my long-running goal involving cross-region architecture.')"
+assert_field "$output" model gpt-6-astra
+assert_field "$output" effort high
+write_response; set_noul phase_dependency 0.91
+output="$(run_route 'Plan a routine activity with a known sequence but fewer than three milestones.')"
+assert_field "$output" model gpt-6-luna
+
+# The explicit complex-goal boundary is three or more substantive milestones
+# plus material dependencies between earlier and later milestone outputs.
+write_response; set_noul multi_phase_goal 0.70; set_noul phase_dependency 0.70
+output="$(run_route 'Plan a product goal with discovery, design, implementation, integration, and launch validation; each stage depends on decisions and verified outputs from the preceding stages.')"
+assert_field "$output" model gpt-6-astra
+assert_field "$output" effort high
+write_response; set_noul multi_phase_goal 0.69; set_noul phase_dependency 0.91
+output="$(run_route 'Plan a product goal with discovery, design, implementation, integration, and launch validation; each stage depends on decisions and verified outputs from the preceding stages.')"
+assert_field "$output" model gpt-6-sol
+assert_field "$output" effort medium
 
 write_response; set_noul complete_feature 0.88
 output="$(run_route 'Implement a feature with interacting behaviors.')"

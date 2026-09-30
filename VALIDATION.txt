@@ -1,13 +1,11 @@
-Public source validation — 2026-09-30
+Codex Jev Router validation record
 
-Shell syntax checks: passed for codex-route, install-global-jev-bridge.sh, and test-hybrid-router.sh.
-Offline routing contract checks: passed. The mocked TypeSafe request verifies twelve independent Noul questions with explicit true/false criteria, configured probability thresholds, local deterministic model/effort composition, GPT-6.1 Sol selection, allowance-conservation guidance, and retained sensitive/heavy local floors.
-Noul boundaries: passed at the inclusive 0.30 negative and 0.70 positive thresholds; the middle band routes to the configured conservative tier.
-Local bridge checks: 6 passed, 0 failed. The bridge validates and preserves the exact twelve Noul probabilities without inventing a confidence field.
-Catalog and guide: eight model specifications are present; GPT-Reserve is excluded. README, AGENTS_TEMPLATE.md, and the Word guide explain the atomic Noul architecture, uncertainty bands, GPT-6.1 Sol, and the limits of Codex subscription usage estimates.
-SHA256SUMS: verified against every listed package file.
+Offline router contract checks: passed. The mocked TypeSafe request verifies fifteen independent Noul questions with explicit true/false criteria, probability thresholds, deterministic local model/effort composition, no-memory task-context boundary, GPT-6.1 Sol selection, allowance-conservation guidance, and retained sensitive/heavy local floors.
 
-Live Jev smoke checks: 12 safe prompts were sent through the real API. Every request returned Jev 1.13.0 and all twelve Noul probabilities. The examples exercised all twelve criteria, including default/Luna, contained unknown-cause/Sol, GUI and multi-step coding/GPT-6.1 Sol, standard verification/Sol, frontier architecture and deep audit/Astra, and two frontier signals/Astra xhigh. A contained unknown bug initially hit an overly broad local Astra floor; the floor was narrowed to cross-system failures and the contained case was rechecked at GPT-6 Sol. These examples verify request/response and composition behavior, not statistical calibration of thresholds.
-Live call usage metadata: 7,244–7,267 input tokens and 244 output tokens per request. This is TypeSafe API token usage, not a measured conversion to ChatGPT subscription allowance.
+Noul boundaries: passed at inclusive 0.30 negative and 0.70 positive thresholds; the middle band routes to the configured conservative tier. Both multi-phase-goal criteria are required for Astra high. An incomplete ongoing-goal brief routes to Sol medium unless a stronger positive signal applies. Long duration or independent routine work alone does not qualify.
 
-Exact Plus/Pro per-task allowance conversion, actual subscription consumption, native Desktop acceptance test, and a new GitHub release asset were not tested or produced.
+Local bridge checks: 6 passed, 0 failed. The bridge validates and preserves all fifteen Noul probabilities without inventing a confidence field.
+
+Catalog and guide: eight model specifications are present; GPT-Reserve is excluded. README, AGENTS_TEMPLATE.md, and the Word guide explain Jev's no-memory boundary, complete-goal context requirement, explicit multi-phase criteria, uncertainty handling, allowance limits, and the model-selection rules.
+
+Live Jev checks: five safe prompts sent through the real API; all returned Jev 1.13.0 and fifteen Noul probabilities. Results: (1) an underspecified “continue my long-running goal” prompt scored incomplete_goal_context 0.97 and routed GPT-6 Sol medium; (2) a complete five-milestone dependent cookbook goal scored multi_phase_goal 0.96 and phase_dependency 0.98, with no competing positive signals, and routed GPT-6 Astra high; (3) a five-stage dependent product-launch goal also routed Astra high, with a separate frontier-architecture signal positive; (4) routine monthly reports across a year scored multi_phase_goal 0.18 and phase_dependency 0.09 and routed GPT-6 Luna low; (5) four independent short stories scored multi_phase_goal 0.76 and phase_dependency 0.10 and routed Luna low. These examples verify request/response and composition behavior, not statistical calibration of the thresholds or general model-selection accuracy.

@@ -414,6 +414,7 @@ JEV_MODEL_CATALOG=''
 JEV_NUOL_QUESTIONS=''
 JEV_OFFICIAL_DOC_TEXT=''
 JEV_ROUTING_CRITERIA=''
+JEV_TASK_CONTEXT_BOUNDARY=''
 JEV_NUOL_YES_THRESHOLD='0.70'
 JEV_NUOL_NO_THRESHOLD='0.30'
 JEV_NUOL_UNCERTAIN_POLICY=''
@@ -424,16 +425,19 @@ load_jev_model_catalog() {
   [[ -r "$catalog_file" ]] || return 1
   raw="$(cat "$catalog_file")" || return 1
   jq -e '.models | length > 0' <<< "$raw" >/dev/null 2>&1 || return 1
-  jq -e --argjson expected '["complete_feature","complex_agentic_coding","computer_use_workflow","cross_system_verification","data_integrity_verification","deep_security_audit","extensive_conflicting_data","frontier_architecture","frontier_debugging","integration_verification","security_verification","unknown_cause"]' '
+  jq -e --argjson expected '["complete_feature","complex_agentic_coding","computer_use_workflow","cross_system_verification","data_integrity_verification","deep_security_audit","extensive_conflicting_data","frontier_architecture","frontier_debugging","incomplete_goal_context","integration_verification","multi_phase_goal","phase_dependency","security_verification","unknown_cause"]' '
     .selection_policy as $policy |
     ($policy.noul_questions | map(.id) | sort) == $expected and
     ($policy.composition_policy as $composition |
       ($composition.signal_groups.frontier | type == "array" and length > 0) and
+      ($composition.multi_phase_goal_signal_ids | type == "array" and length == 2) and
+      ($composition.incomplete_goal_context_signal_id | type == "string" and ($expected | index($composition.incomplete_goal_context_signal_id) != null)) and
       ($composition.signal_groups.standard | type == "array" and length > 0) and
       ($composition.signal_groups.uncertainty | type == "array" and length > 0) and
-      all([$composition.signal_groups.frontier[], $composition.signal_groups.standard[], $composition.signal_groups.uncertainty[], $composition.coding_signal_ids[]][]; . as $id | $expected | index($id) != null) and
+      all([$composition.signal_groups.frontier[], $composition.signal_groups.standard[], $composition.signal_groups.uncertainty[], $composition.coding_signal_ids[], $composition.multi_phase_goal_signal_ids[], $composition.incomplete_goal_context_signal_id][]; . as $id | $expected | index($id) != null) and
       all(["frontier","coding","standard","uncertain","default"][]; . as $tier | ($composition.routes[$tier].model | type == "string" and length > 0)))
   ' <<< "$raw" >/dev/null 2>&1 || return 1
+  JEV_TASK_CONTEXT_BOUNDARY="$(jq -er '.selection_policy.task_context_boundary | select(type == "string" and contains("Jev has no memory"))' <<< "$raw")" || return 1
   JEV_NUOL_YES_THRESHOLD="$(jq -er '.selection_policy.noul_thresholds.positive_at_or_above | select(type == "number" and . > 0.5 and . <= 1)' <<< "$raw")" || return 1
   JEV_NUOL_NO_THRESHOLD="$(jq -er '.selection_policy.noul_thresholds.negative_at_or_below | select(type == "number" and . >= 0 and . < 0.5)' <<< "$raw")" || return 1
   JEV_NUOL_UNCERTAIN_POLICY="$(jq -er '.selection_policy.noul_thresholds.uncertain | select(type == "string" and length > 20)' <<< "$raw")" || return 1
@@ -558,7 +562,7 @@ ask_jev_for_advisory() {
   [[ -n "$api_key" ]] || { JEV_STATUS='credential_missing'; return 1; }
 
   load_jev_model_catalog || { JEV_STATUS='request_failed'; return 1; }
-  request="$(jq -cn --arg model "$JEV_MODEL" --arg task "$task_text" --arg documentation "$JEV_OFFICIAL_DOC_TEXT" --arg routing_criteria "$JEV_ROUTING_CRITERIA" --argjson questions "$JEV_NUOL_QUESTIONS" '{model:$model,state:{task:$task,routing_criteria:$routing_criteria,official_model_documentation_text:$documentation},questions:$questions}')" || { JEV_STATUS='request_failed'; return 1; }
+  request="$(jq -cn --arg model "$JEV_MODEL" --arg task "$task_text" --arg task_context_boundary "$JEV_TASK_CONTEXT_BOUNDARY" --arg documentation "$JEV_OFFICIAL_DOC_TEXT" --arg routing_criteria "$JEV_ROUTING_CRITERIA" --argjson questions "$JEV_NUOL_QUESTIONS" '{model:$model,state:{task:$task,task_context_boundary:$task_context_boundary,routing_criteria:$routing_criteria,official_model_documentation_text:$documentation},questions:$questions}')" || { JEV_STATUS='request_failed'; return 1; }
 
   # The authorization header is supplied through an inherited file descriptor.
   # It never appears in curl's command-line arguments.
@@ -626,7 +630,7 @@ composition_value() {
 }
 
 compose_jev_route() {
-  local frontier standard complexity coding=0 coding_signal
+  local frontier standard complexity coding=0 coding_signal multi_phase_complexity=0 goal_signal_id incomplete_goal_context=0
   frontier="$(noul_group_count frontier positive)" || return 1
   standard="$(noul_group_count standard positive)" || return 1
   complexity="$(noul_group_count uncertainty uncertain)" || return 1
@@ -634,10 +638,20 @@ compose_jev_route() {
     [[ -n "$coding_signal" ]] || continue
     if noul_positive "$coding_signal"; then coding=1; fi
   done < <(jq -er '.selection_policy.composition_policy.coding_signal_ids[]' <<< "$JEV_MODEL_CATALOG") || return 1
+  local goal_signals=0
+  while IFS= read -r goal_signal_id; do
+    [[ -n "$goal_signal_id" ]] || continue
+    if noul_positive "$goal_signal_id"; then goal_signals=$((goal_signals + 1)); fi
+  done < <(jq -er '.selection_policy.composition_policy.multi_phase_goal_signal_ids[]' <<< "$JEV_MODEL_CATALOG") || return 1
+  if ((goal_signals == 2)); then multi_phase_complexity=1; fi
 
-  # Deterministic composition: explicit frontier evidence takes priority;
-  # GPT-6.1 Sol is selected only for its documented coding/computer-use fit.
-  if ((frontier > 0)); then
+  local incomplete_goal_context_signal_id
+  incomplete_goal_context_signal_id="$(jq -er .selection_policy.composition_policy.incomplete_goal_context_signal_id <<< "$JEV_MODEL_CATALOG")" || return 1
+  if noul_positive "$incomplete_goal_context_signal_id"; then incomplete_goal_context=1; fi
+
+  # Deterministic composition: frontier evidence or both explicit goal-shape
+  # signals qualify for Astra; missing goal scope is uncertain, never inferred.
+  if ((frontier > 0 || multi_phase_complexity > 0)); then
     JEV_CHOICE="$(composition_value frontier model)" || return 1
     if ((frontier >= 2)); then
       JEV_CHOICE_EFFORT="$(composition_value frontier effort_multiple_signals)" || return 1
@@ -650,7 +664,7 @@ compose_jev_route() {
   elif ((standard > 0)); then
     JEV_CHOICE="$(composition_value standard model)" || return 1
     JEV_CHOICE_EFFORT="$(composition_value standard effort)" || return 1
-  elif ((complexity > 0)); then
+  elif ((incomplete_goal_context > 0 || complexity > 0)); then
     # Ambiguous atomic answers do not qualify a cheaper route as sufficient.
     JEV_CHOICE="$(composition_value uncertain model)" || return 1
     JEV_CHOICE_EFFORT="$(composition_value uncertain effort)" || return 1

@@ -35,7 +35,7 @@ function readSettings() {
 
 const settings = readSettings();
 const allowedJevStatuses = new Set(['not_requested', 'credential_missing', 'request_failed', 'malformed_noul_response', 'nouls_composed']);
-const requiredNoulIds = ['complete_feature', 'complex_agentic_coding', 'computer_use_workflow', 'cross_system_verification', 'data_integrity_verification', 'deep_security_audit', 'extensive_conflicting_data', 'frontier_architecture', 'frontier_debugging', 'integration_verification', 'security_verification', 'unknown_cause'];
+const requiredNoulIds = ["complete_feature","complex_agentic_coding","computer_use_workflow","cross_system_verification","data_integrity_verification","deep_security_audit","extensive_conflicting_data","frontier_architecture","frontier_debugging","incomplete_goal_context","integration_verification","multi_phase_goal","phase_dependency","security_verification","unknown_cause"];
 
 function parseNoulDetails(text) {
   if (!text) return undefined;
