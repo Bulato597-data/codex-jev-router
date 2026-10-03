@@ -1,0 +1,29 @@
+name: Verify
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check syntax and package hashes
+        run: |
+          bash -n codex-route
+          bash -n install-global-jev-bridge.sh
+          bash -n test-hybrid-router.sh
+          node --check jev-route.mjs
+          node --check jev-keychain-bridge.mjs
+          sha256sum -c SHA256SUMS
+      - name: Run offline contract checks
+        run: |
+          bash test-hybrid-router.sh
+          node --test test-jev-keychain-bridge.mjs

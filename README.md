@@ -1,26 +1,44 @@
 # Codex Model Router and Jev Guide
 
-Desktop and CLI setup for macOS • September 30 2026
+Desktop and CLI setup for macOS • October 3 2026
 
-This package helps Codex users choose a model and reasoning effort for a new task. Codex refines the request into a concise brief, Jev evaluates independent, explicitly defined Noul statements against the task and saved model reference, and deterministic local rules combine those probabilities into the final recommendation. The aim is the lightest model and effort sufficient for the complete task without sacrificing quality.
+This package provides local Codex Desktop and CLI routing with optional TypeSafe Jev guidance. Jev recommends the parent model and reasoning effort through separate Choice questions; local safety floors produce the final route. After the manual parent handoff when required, the parent decides whether to delegate, selects each worker model and effort, and parallelizes useful independent tasks. This package makes no guarantee of task accuracy or subscription savings.
 
 ## How the Desktop workflow works
 
 1. Send a new actionable task in a local Codex Desktop chat. Codex prepares the brief without expanding your scope and sends it once to the installed Jev helper.
 
-2. When a validated set of Jev Noul answers is composed into a final route that differs from the active model or effort, Codex reports the recommendation and ends its turn. It performs no task research, file reads, edits, or implementation while waiting. If the active selection is unknown, the instruction also requires a pause for confirmation.
+2. When a confidence-qualified final Jev route differs from the active model or effort, Codex reports the recommendation and ends its turn. It performs no task research, file reads, edits, or implementation while waiting. If the active selection is unknown, the instruction also requires a pause for confirmation.
 
 3. Open the Desktop model picker. Select the final recommended model and reasoning effort, then send “continue.” Codex resumes the same task without another Jev call unless the task materially changes.
 
-4. If the composed route already matches the active selection, work continues. If Jev is unavailable or returns malformed answers, the local policy continues without asking you to switch.
+4. If the accepted route already matches the active selection, work continues. If Jev is unavailable, malformed, or below the model confidence floor, the local policy continues without asking you to switch.
 
 ## What the pause looks like
 
-Illustrative output only: Jev reports `complex_agentic_coding: 0.91`. Local composition selects GPT-6.1 Sol, High. Local override: none. Select GPT-6.1 Sol and High in the Desktop picker, then say “continue.” Noul values are probabilities for their stated facts, not confidence scores.
+Illustrative output only: Jev recommends GPT-6 Sol, High. Final recommendation: GPT-6 Sol, High. Model confidence: 0.91. Effort confidence: 0.87. Local override: none. Select GPT-6 Sol and High in the Desktop picker, then say “continue.”
 
 ## Scope and limits
 
 The Desktop pause is an assistant instruction, not an application-level execution lock. The helper cannot change the Desktop picker. The CLI launcher can start a new CLI session with the selected model and effort. This package supports the local Mac workflow; it does not establish automatic native iPhone routing or cloud ChatGPT Work coverage.
+
+# Parent routing and delegation
+
+Jev's recommendation is for the parent model and reasoning effort. Complete the existing routing handoff before starting the main task or choosing delegation; when a pause is required, the user manually selects the displayed parent model and effort and says “continue” first.
+
+Once execution resumes, the parent decides whether subagents are worthwhile and explicitly chooses each worker's model and reasoning effort. Assign smaller, well-defined tasks to suitable lighter models. Use stronger workers where complexity or risk warrants, including the same model as the parent when justified. Parallelize independent tasks when useful, avoiding duplicated work and conflicting edits. The parent remains responsible for integration, reviewing worker results, and final acceptance checks. Delegation does not change existing approval boundaries.
+
+## Task context
+
+Jev has no memory of earlier requests. Include the complete goal scope and current phase when routing a new phase of an ongoing goal. Do not rely on Jev to infer missing objectives, milestones, or dependencies from prior turns or a goal label. Ordinary unchanged continuations do not require another routing call.
+
+## Choice response compatibility
+
+This release aligns the public package to the maintained Choice implementation. It replaces the previous public Noul composition and multi-phase-goal thresholds. The helper returns jev.choice, jev.effort and separate confidence_details; accepted final routes use route.source = jev-choice. Consumers of jev.nouls, jev.details or jev-noul-composed must adapt. Model and effort confidence each have a 0.70 gate; low effort confidence uses the disclosed local effort floor. Update the helper, bridge, router, catalog and routing instruction together when installing this package.
+
+## Public package boundaries
+
+Public CLI hybrid routing requires a task brief on stdin and never sends forwarded Codex flags or positional arguments to Jev. Private phone gateways and authenticated remote tunnels are excluded. User settings, credential files, Keychain contents, logs, local usage records and evaluation captures are excluded. The installed router is not changed by downloading this source. The public helper also retains a 64 KiB socket response limit and the bridge permits at most two simultaneous recommendations.
 
 # Install for local Codex Desktop
 
@@ -36,19 +54,19 @@ The router looks for an explicit TYPESAFE_API_KEY first, then ~/.config/codex-ro
 
 ## Install the helper and instruction
 
-1. Extract the ZIP and open its codex-model-router folder as a local Codex project. You may ask Codex to perform the following installation steps; regular use is through Desktop.
+1. Extract the source ZIP and open its repository folder as a local Codex project. You may ask Codex to perform the following installation steps; regular use is through Desktop.
 
 ```bash
 bash ./install-global-jev-bridge.sh
 ```
 
-2. Open AGENTS_TEMPLATE.md as a Markdown text file and merge its instructions into ~/.codex/AGENTS.md, preserving unrelated instructions and replacing any older conflicting Jev rule. Do not copy the template over the entire file blindly. The installer installs code only; it does not merge this instruction for you.
+2. Merge AGENTS_TEMPLATE.md into ~/.codex/AGENTS.md, preserving unrelated instructions and replacing any older conflicting Jev rule. Do not copy the template over the entire file blindly. The installer installs code only; it does not merge this instruction for you.
 
 3. The installation places code and the catalog in ~/.codex/jev-router and commands in ~/.local/bin. settings.json contains only non-secret Keychain metadata. The helper can run directly without a persistent bridge process.
 
 4. The supplied instruction uses GPT-6 Luna at Extra High as the starter preference. Select that default in your own Desktop settings if available. The installer does not change your Desktop default or active model.
 
-5. Start a fresh local chat so it loads the global instruction, then try a real task. Confirm the chat displays both the model and reasoning effort and stops when a composed route differs. Also try another project to check instruction loading there.
+5. Start a fresh local chat so it loads the global instruction, then try a real task. Confirm the chat displays both the model and reasoning effort and stops when the qualified route differs. Also try another project to check instruction loading there.
 
 # Use the helper and CLI
 
@@ -58,7 +76,7 @@ bash ./install-global-jev-bridge.sh
 printf '%s\n' 'Build a local project board with saved tasks' | ~/.local/bin/jev-route
 ```
 
-The JSON result separates validated Jev Noul answers from the final recommendation. `jev.verified: true` means every expected atomic answer passed schema validation; it does not mean the selected route is likely to succeed. Inspect `jev.nouls`, `jev.details.threshold_policy`, `recommendation.model`, `recommendation.effort`, `route.source`, and `route.override`.
+The JSON result separates Jev’s choice from the final recommendation. A valid typed result has jev.verified true, but that alone does not mean the confidence floor was met. route.source equal to jev-choice identifies a qualified Jev route. Inspect recommendation.model, recommendation.effort, route.override, and jev.confidence_details.
 
 ## Preview a CLI recommendation
 
@@ -68,15 +86,13 @@ printf '%s\n' 'Add a project search filter' | ./codex-route --dry-run --hybrid
 
 This asks Jev and prints the selected route without starting Codex. Review the recommendation, then use the launch command below when ready.
 
-For every hybrid CLI launch, provide the task brief on standard input. The router sends only that brief to Jev; it never forwards Codex option values or positional arguments. Jev has no memory, so a new routing request for an ongoing goal must include the complete goal scope and current phase when those details affect the route. A hybrid launch with no stdin brief stops with an error. For sensitive task text, enter it through a protected file or editor rather than a shell command, because shell commands can be saved in history.
-
 ## Start a new CLI session
 
 ```bash
 printf '%s\n' 'Add a project search filter' | ./codex-route --hybrid
 ```
 
-This makes a new routing call and launches Codex with the resulting model and effort. The CLI does not stop for the Desktop picker; it passes the choice to the new process. Omit --hybrid for local keyword routing only. Keep the script beside its catalog, or use the globally installed command.
+This makes a new routing call and launches Codex with the resulting model and effort. The CLI does not stop for the Desktop picker; it passes the choice to the new process. Omit --hybrid for local keyword routing only. Keep the script beside its catalog, or use the globally installed command. Supply hybrid task text on stdin; forwarded Codex flags and positional arguments stay local.
 
 ## Use an explicit override
 
@@ -98,25 +114,21 @@ Send the revised task instead of “continue.” Codex should refine and route t
 
 ## What Jev receives
 
-Each request sends the complete task brief, an explicit no-memory boundary, criteria for fifteen independent Noul questions, the deterministic composition rubric, and saved model reference text directly in the request. Jev cannot retrieve earlier requests or stored goals, supply missing objectives, or invent criteria. The catalog contains detailed facts written from official documentation; it is not an exact reproduction of the source pages.
+Each request sends the task brief, detailed routing criteria, and saved model reference text directly in the request. Jev does not need to open links and is not assumed to remember earlier requests. The catalog contains detailed facts written from official documentation; it is not an exact reproduction of the source pages.
 
-The saved catalog covers GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, and GPT-5.5. GPT-Reserve is excluded. In one HTTP call, Jev evaluates fifteen independent Noul questions in parallel against the same task state. Local code applies the explicit thresholds and composition table; Jev does not select a model or effort. The local Codex cache supplies availability information when present; the catalog must be maintained as models change.
+The saved catalog covers GPT-6 Astra, GPT-6.1 Sol, GPT-6 Sol, GPT-6 Luna, GPT-5.6 Sol, GPT-5.6 Terra, GPT-5.6 Luna, and GPT-5.5. GPT-Reserve is excluded. The router offers eligible models as direct choices and asks a separate conditional effort question for each eligible model in the same HTTP call. It reads only the effort answer associated with the chosen model. The local Codex cache supplies availability information when present; the catalog must be maintained as models change.
 
-## Noul thresholds and local rules
+## Confidence and local rules
 
-A Noul value is the 0–1 probability that its one stated condition is true. Values at or above 0.70 count as positive; values at or below 0.30 count as negative; the middle band is uncertain and routes to GPT-6 Sol at medium unless a higher-priority positive signal applies. These are initial router policy thresholds, not TypeSafe-provided confidence scores or calibrated success probabilities. The composition table selects Astra for positive frontier signals or when both defined multi-phase-goal conditions are positive, GPT-6.1 Sol for its complex-coding or computer-use signal, Sol for standard substantial-work signals, and Luna when all signals are negative. Deterministic local classification and sensitive/heavy safety floors remain final.
+The model choice must score at least 0.70. Effort has its own 0.70 floor. If the model qualifies but effort does not, the model can be retained with a disclosed local minimum that favors allowance conservation, reported as effort-confidence-floor. If model confidence is too low, local model routing applies. High-consequence and heavy-work rules can raise the final route above Jev’s advice.
 
-### Multi-phase goal boundary
-
-A long timeline or the words “goal” or “plan” do not make work complex. Jev has no memory, so these questions use only the complete goal and current phase included in this request. The router asks two separate yes/no questions: does the full outcome require **at least three substantive delivery milestones**, and do later milestones **materially depend on decisions or validated outputs from earlier milestones**? Each stage must represent a meaningful deliverable, not a checklist step. Both Noul probabilities must meet the 0.70 positive threshold to route to GPT-6 Astra at high effort. A separate `incomplete_goal_context` Noul asks whether the request refers to an ongoing goal phase but omits the full scope. A positive result routes to GPT-6 Sol at medium unless a stronger positive signal applies; Jev must not guess the missing goal from prior turns or memory. Any uncertain Noul also routes to GPT-6 Sol at medium unless a stronger positive signal applies. Two or more of the four separate frontier signals are still required for xhigh; multi-phase status by itself never raises Astra to xhigh.
-
-TypeSafe’s [Confidence guide](https://docs.typesafe.ai/confidence) explains that Choice and Score confidence comes from their output distributions; Noul does not return confidence. Its [coding-agents guide](https://docs.typesafe.ai/introduction/coding-agents) describes Jev as a structured decision component used inside a coding agent, not a replacement for the coding-agent model. The router uses Noul probabilities only for the stated independent conditions, not as a demonstrated probability that the task will succeed. Local composition is explicit so the subscription-allowance preference can be inspected and changed in code. The router preserves included Codex subscription allowance: prefer GPT-6 Luna at the lowest effort that meets the task’s quality and verification needs, and use Sol or Astra only when their added capability is needed. OpenAI says allowance use varies with model, task, and settings; higher reasoning effort can consume more allowance without guaranteeing a better result. The catalog provides Standard-mode credit rates for all eight models as a directional signal for eligible credit-billed usage: GPT-6 Luna is 2.5 / 0.25 / 12.5 credits per million input / cached-input / output tokens, GPT-6.1 Sol is 50 / 2.5 / 250, and GPT-6 Sol is 50 / 5 / 250. These credit rates do not give an exact per-task conversion for included subscription allowance. API token prices are not used as a proxy for subscription use. This package makes no guarantee of task accuracy or subscription savings. See [OpenAI’s included Work and Codex allowance guidance](https://help.openai.com/en/articles/20001516-managing-usage-with-gpt-6-astra-in-work-and-codex) and the [Codex credit rate card](https://help.openai.com/en/articles/11481834-chatgpt-rate-card-business-enterpriseedu-credit-based-pricing).
+Confidence is the returned Choice score, not a demonstrated probability that the task will succeed. Jev is instructed to conserve included Codex allowance by using Luna and the lowest sufficient effort when they meet the quality bar. API prices are not a proxy for subscription usage. Credit-rate data applies only to eligible credit-billed usage and does not estimate included Plus or Pro weekly allowance exactly.
 
 ## Troubleshooting
 
 No Jev recommendation: check Node.js, jq, curl, the Keychain service and account, and credential-file precedence. An inaccessible login keychain or network failure can produce a local fallback. Do not print your credential while diagnosing.
 
-No Desktop pause: inspect route.source first. Fallbacks and matching accepted routes intentionally continue. For a differing composed route, confirm a fresh chat loaded ~/.codex/AGENTS.md and that no conflicting instruction overrides it.
+No Desktop pause: inspect route.source first. Fallbacks and matching accepted routes intentionally continue. For a qualified differing route, confirm a fresh chat loaded ~/.codex/AGENTS.md and that no conflicting instruction overrides it.
 
 Model unavailable: select an available model explicitly and update the catalog and policy before relying on automatic routing. A cache is not proof of current entitlement.
 
@@ -152,12 +164,12 @@ Model catalog: https://developers.openai.com/api/docs/models
 - GPT-5.6 Terra: https://developers.openai.com/api/docs/models/gpt-5.6-terra
 - GPT-5.6 Luna: https://developers.openai.com/api/docs/models/gpt-5.6-luna
 - GPT-5.5: https://developers.openai.com/api/docs/models/gpt-5.5
-
 ## Project links
 
-- Source repository: https://github.com/Bulato597-data/codex-jev-router
-- Ready-to-extract ZIP: https://github.com/Bulato597-data/codex-jev-router/releases/latest/download/Codex-Model-Router-Public-Package.zip
+Source repository: https://github.com/Bulato597-data/codex-jev-router
+
+Current source ZIP: https://github.com/Bulato597-data/codex-jev-router/archive/refs/heads/main.zip
 
 ## License
 
-This project is available under the MIT License. See [LICENSE](LICENSE).
+This project is available under the MIT License. See LICENSE.

@@ -93,7 +93,7 @@ test('bridge returns a typed Jev route over its owner-only Unix socket', async (
   const routerPath = path.join(tempDirectory, 'mock-router');
   await writeFile(routerPath, `#!/bin/sh
 cat >/dev/null
-printf '%s\\n' 'lane=sol' 'model=gpt-6-sol' 'effort=high' 'reason=accepted Jev route' 'route_source=jev-noul-composed' 'jev_status=nouls_composed' 'hybrid=jev-noul-composition;composed_model=gpt-6-sol;composed_effort=high;model=jev-test' 'jev_diagnostics={\"basis\":\"independent_noul_questions_composed_locally\",\"threshold_policy\":{\"yes_at_or_above\":0.7,\"no_at_or_below\":0.3,\"uncertain\":\"select the configured uncertainty route; deterministic safety floors may raise it\"},\"nouls\":{\"frontier_architecture\":0,\"frontier_debugging\":0,\"deep_security_audit\":0,\"extensive_conflicting_data\":0,\"complex_agentic_coding\":0,\"computer_use_workflow\":0,\"complete_feature\":0,\"unknown_cause\":0,\"cross_system_verification\":0,\"data_integrity_verification\":0,\"incomplete_goal_context\":0,\"integration_verification\":0,\"multi_phase_goal\":0,\"phase_dependency\":0,\"security_verification\":0}}'
+printf '%s\\n' 'lane=sol' 'model=gpt-6-sol' 'effort=high' 'reason=accepted Jev route' 'route_source=jev-choice' 'jev_status=choice_routed' 'hybrid=jev-advisory;choice=gpt-6-sol;effort=high;model=jev-test;confidence=0.92'
 `);
   await chmod(routerPath, 0o700);
 
@@ -102,9 +102,9 @@ printf '%s\\n' 'lane=sol' 'model=gpt-6-sol' 'effort=high' 'reason=accepted Jev r
   try {
     assert.deepEqual(await runHelper(path.join(tempDirectory, 'bridge.sock'), 'private task text that should not be echoed'), {
       status: 'routed',
-      jev: { verified: true, status: 'nouls_composed', model: 'jev-test', nouls: { frontier_architecture: 0, frontier_debugging: 0, deep_security_audit: 0, extensive_conflicting_data: 0, complex_agentic_coding: 0, computer_use_workflow: 0, complete_feature: 0, unknown_cause: 0, cross_system_verification: 0, data_integrity_verification: 0, incomplete_goal_context: 0, integration_verification: 0, multi_phase_goal: 0, phase_dependency: 0, security_verification: 0 }, details: { basis: 'independent_noul_questions_composed_locally', threshold_policy: { yes_at_or_above: 0.7, no_at_or_below: 0.3, uncertain: 'select the configured uncertainty route; deterministic safety floors may raise it' }, nouls: { frontier_architecture: 0, frontier_debugging: 0, deep_security_audit: 0, extensive_conflicting_data: 0, complex_agentic_coding: 0, computer_use_workflow: 0, complete_feature: 0, unknown_cause: 0, cross_system_verification: 0, data_integrity_verification: 0, incomplete_goal_context: 0, integration_verification: 0, multi_phase_goal: 0, phase_dependency: 0, security_verification: 0 } } },
+      jev: { verified: true, status: 'choice_routed', choice: 'gpt-6-sol', effort: 'high', model: 'jev-test', confidence: 0.92 },
       recommendation: { lane: 'sol', model: 'gpt-6-sol', effort: 'high' },
-      route: { source: 'jev-noul-composed', override: null },
+      route: { source: 'jev-choice', override: null },
       reason: 'accepted Jev route',
     });
   } finally {
@@ -113,17 +113,17 @@ printf '%s\\n' 'lane=sol' 'model=gpt-6-sol' 'effort=high' 'reason=accepted Jev r
   }
 });
 
-test('Noul probabilities survive the socket and direct helper paths', async () => {
-  const tempDirectory = await mkdtemp(path.join(os.tmpdir(), 'jev-noul-test-'));
+test('component confidence survives the socket and direct helper paths', async () => {
+  const tempDirectory = await mkdtemp(path.join(os.tmpdir(), 'jev-confidence-test-'));
   const routerPath = path.join(tempDirectory, 'mock-router');
   const details = {
-    basis: 'independent_noul_questions_composed_locally',
-    threshold_policy: { yes_at_or_above: 0.7, no_at_or_below: 0.3, uncertain: 'select the configured uncertainty route; deterministic safety floors may raise it' },
-    nouls: { frontier_architecture: 0.92, frontier_debugging: 0, deep_security_audit: 0, extensive_conflicting_data: 0, complex_agentic_coding: 0, computer_use_workflow: 0, complete_feature: 0, unknown_cause: 0, cross_system_verification: 0, data_integrity_verification: 0, incomplete_goal_context: 0, integration_verification: 0, multi_phase_goal: 0, phase_dependency: 0, security_verification: 0 },
+    basis: 'model_choice_with_separate_effort_gate', model: 0.92, effort: 0.64,
+    model_probabilities: { 'gpt-6-sol': 0.93, 'gpt-6-luna': 0.07 },
+    effort_probabilities: { high: 0.7, xhigh: 0.3 },
   };
   await writeFile(routerPath, `#!/bin/sh
 cat >/dev/null
-printf '%s\\n' 'lane=sol' 'model=gpt-6-sol' 'effort=high' 'reason=local safety floor' 'route_source=jev-noul-composed' 'route_override=sensitive-risk-floor' 'jev_status=nouls_composed' 'hybrid=jev-noul-composition;composed_model=gpt-6-sol;composed_effort=high;model=jev-test' 'jev_diagnostics=${JSON.stringify(details)}'
+printf '%s\\n' 'lane=sol' 'model=gpt-6-sol' 'effort=high' 'reason=local effort floor' 'route_source=jev-choice' 'route_override=effort-confidence-floor' 'jev_status=choice_routed' 'hybrid=jev-advisory;choice=gpt-6-sol;effort=high;model=jev-test;confidence=0.92' 'jev_diagnostics=${JSON.stringify(details)}'
 `);
   await chmod(routerPath, 0o700);
   const { server } = await startBridge(routerPath);
@@ -131,11 +131,11 @@ printf '%s\\n' 'lane=sol' 'model=gpt-6-sol' 'effort=high' 'reason=local safety f
     const socket = await runHelper(path.join(tempDirectory, 'bridge.sock'), 'Synthetic task');
     const direct = await runHelper(path.join(tempDirectory, 'absent.sock'), 'Synthetic task', { JEV_BRIDGE_ROUTER: routerPath });
     assert.deepEqual(socket, direct);
-    assert.deepEqual(socket.jev.details, details);
-    assert.deepEqual(socket.jev.nouls, details.nouls);
-    assert.equal(socket.route.override, 'sensitive-risk-floor');
+    assert.deepEqual(socket.jev.confidence_details, details);
+    assert.equal(socket.jev.confidence, 0.92);
+    assert.equal(socket.route.override, 'effort-confidence-floor');
     const inconsistent = structuredClone(socket);
-    inconsistent.jev.nouls.frontier_architecture = 0.1;
+    inconsistent.jev.confidence = 0.99;
     const rejected = await runHelperAgainstSocketResult(path.join(tempDirectory, 'bad.sock'), 'Synthetic task', inconsistent);
     assert.notEqual(rejected.code, 0);
   } finally {
@@ -165,7 +165,7 @@ test('global helper sends task text through the owner-only Unix socket', async (
   const socketPath = path.join(tempDirectory, 'bridge.sock');
   await writeFile(routerPath, `#!/bin/sh
 cat >/dev/null
-printf '%s\\n' 'lane=luna' 'model=gpt-6-luna' 'effort=low' 'reason=accepted Jev route' 'route_source=jev-noul-composed' 'jev_status=nouls_composed' 'hybrid=jev-noul-composition;composed_model=gpt-6-luna;composed_effort=low;model=jev-test' 'jev_diagnostics={\"basis\":\"independent_noul_questions_composed_locally\",\"threshold_policy\":{\"yes_at_or_above\":0.7,\"no_at_or_below\":0.3,\"uncertain\":\"select the configured uncertainty route; deterministic safety floors may raise it\"},\"nouls\":{\"frontier_architecture\":0,\"frontier_debugging\":0,\"deep_security_audit\":0,\"extensive_conflicting_data\":0,\"complex_agentic_coding\":0,\"computer_use_workflow\":0,\"complete_feature\":0,\"unknown_cause\":0,\"cross_system_verification\":0,\"data_integrity_verification\":0,\"incomplete_goal_context\":0,\"integration_verification\":0,\"multi_phase_goal\":0,\"phase_dependency\":0,\"security_verification\":0}}'
+printf '%s\\n' 'lane=luna' 'model=gpt-6-luna' 'effort=low' 'reason=accepted Jev route' 'route_source=jev-choice' 'jev_status=choice_routed' 'hybrid=jev-advisory;choice=gpt-6-luna;effort=low;model=jev-test;confidence=0.91'
 `);
   await chmod(routerPath, 0o700);
   const { server } = await startBridge(routerPath, {
@@ -175,9 +175,9 @@ printf '%s\\n' 'lane=luna' 'model=gpt-6-luna' 'effort=low' 'reason=accepted Jev 
   try {
     assert.deepEqual(await runHelper(socketPath, 'route this private task'), {
       status: 'routed',
-      jev: { verified: true, status: 'nouls_composed', model: 'jev-test', nouls: { frontier_architecture: 0, frontier_debugging: 0, deep_security_audit: 0, extensive_conflicting_data: 0, complex_agentic_coding: 0, computer_use_workflow: 0, complete_feature: 0, unknown_cause: 0, cross_system_verification: 0, data_integrity_verification: 0, incomplete_goal_context: 0, integration_verification: 0, multi_phase_goal: 0, phase_dependency: 0, security_verification: 0 }, details: { basis: 'independent_noul_questions_composed_locally', threshold_policy: { yes_at_or_above: 0.7, no_at_or_below: 0.3, uncertain: 'select the configured uncertainty route; deterministic safety floors may raise it' }, nouls: { frontier_architecture: 0, frontier_debugging: 0, deep_security_audit: 0, extensive_conflicting_data: 0, complex_agentic_coding: 0, computer_use_workflow: 0, complete_feature: 0, unknown_cause: 0, cross_system_verification: 0, data_integrity_verification: 0, incomplete_goal_context: 0, integration_verification: 0, multi_phase_goal: 0, phase_dependency: 0, security_verification: 0 } } },
+      jev: { verified: true, status: 'choice_routed', choice: 'gpt-6-luna', effort: 'low', model: 'jev-test', confidence: 0.91 },
       recommendation: { lane: 'luna', model: 'gpt-6-luna', effort: 'low' },
-      route: { source: 'jev-noul-composed', override: null },
+      route: { source: 'jev-choice', override: null },
       reason: 'accepted Jev route',
     });
   } finally {
@@ -191,7 +191,7 @@ test('global helper routes directly when no local bridge is running', async () =
   const routerPath = path.join(tempDirectory, 'mock-router');
   await writeFile(routerPath, `#!/bin/sh
 cat >/dev/null
-printf '%s\\n' 'lane=terra' 'model=gpt-5.6-terra' 'effort=medium' 'reason=local fallback' 'route_source=local-fallback' 'hybrid=local-fallback;reason=request_failed'
+printf '%s\\n' 'lane=terra' 'model=gpt-5.6-terra' 'effort=medium' 'reason=local fallback' 'route_source=local-fallback' 'hybrid=local-fallback;minimum_confidence=0.80'
 `);
   await chmod(routerPath, 0o700);
   try {
@@ -199,7 +199,7 @@ printf '%s\\n' 'lane=terra' 'model=gpt-5.6-terra' 'effort=medium' 'reason=local 
       JEV_BRIDGE_ROUTER: routerPath,
     }), {
       status: 'routed',
-      jev: { verified: false, status: 'not_requested', model: null, nouls: null, details: null },
+      jev: { verified: false, status: 'not_requested', choice: null, effort: null, model: null, confidence: null },
       recommendation: { lane: 'terra', model: 'gpt-5.6-terra', effort: 'medium' },
       route: { source: 'local-fallback', override: null },
       reason: 'local fallback',
@@ -214,7 +214,7 @@ test('global helper rejects invalid or inconsistent Jev status from a bridge', a
   const socketPath = path.join(tempDirectory, 'untrusted.sock');
   const validResult = {
     status: 'routed',
-    jev: { verified: false, status: 'not_requested', model: null, nouls: null, details: null },
+    jev: { verified: false, status: 'not_requested', choice: null, effort: null, model: null, confidence: null },
     recommendation: { lane: 'terra', model: 'gpt-5.6-terra', effort: 'medium' },
     route: { source: 'local-fallback', override: null },
     reason: 'local fallback',
@@ -223,7 +223,7 @@ test('global helper rejects invalid or inconsistent Jev status from a bridge', a
   try {
     const invalidResults = [
       { ...validResult, jev: { ...validResult.jev, status: 'untrusted status text' } },
-      { ...validResult, jev: { ...validResult.jev, verified: true, model: 'jev-test', nouls: {} } },
+      { ...validResult, jev: { ...validResult.jev, verified: true, choice: 'terra', model: 'jev-test', confidence: 0.9 } },
     ];
 
     for (const result of invalidResults) {
@@ -232,6 +232,52 @@ test('global helper rejects invalid or inconsistent Jev status from a bridge', a
       assert.equal(outcome.output, '');
     }
   } finally {
+    await rm(tempDirectory, { recursive: true, force: true });
+  }
+});
+
+test('public helper rejects an oversized otherwise valid socket response', async () => {
+  const tempDirectory = await mkdtemp(path.join(os.tmpdir(), 'jev-response-limit-test-'));
+  const result = {
+    status: 'routed',
+    jev: { verified: false, status: 'not_requested', choice: null, effort: null, model: null, confidence: null },
+    recommendation: { lane: 'terra', model: 'gpt-6-sol', effort: 'medium' },
+    route: { source: 'local-fallback', override: null },
+    reason: 'synthetic fallback',
+    padding: 'x'.repeat(65_536),
+  };
+  try {
+    const rejected = await runHelperAgainstSocketResult(path.join(tempDirectory, 'oversized.sock'), 'Synthetic task', result);
+    assert.notEqual(rejected.code, 0);
+    assert.equal(rejected.output, '');
+  } finally {
+    await rm(tempDirectory, { recursive: true, force: true });
+  }
+});
+
+test('public bridge bounds concurrent recommendations', async () => {
+  const tempDirectory = await mkdtemp(path.join(os.tmpdir(), 'jev-concurrency-test-'));
+  const routerPath = path.join(tempDirectory, 'mock-router');
+  await writeFile(routerPath, `#!/bin/sh
+cat >/dev/null
+sleep 0.3
+printf '%s\\n' 'lane=terra' 'model=gpt-6-sol' 'effort=medium' 'reason=synthetic fallback' 'route_source=local-fallback' 'hybrid=local-fallback'
+`);
+  await chmod(routerPath, 0o700);
+  const { server } = await startBridge(routerPath);
+  const recommend = () => new Promise((resolve, reject) => {
+    const request = http.request({ socketPath: path.join(tempDirectory, 'bridge.sock'), path: '/v1/route', method: 'POST', headers: { 'content-type': 'application/json' } }, (response) => {
+      response.resume();
+      response.on('end', () => resolve(response.statusCode));
+    });
+    request.on('error', reject);
+    request.end(JSON.stringify({ task: 'Synthetic task' }));
+  });
+  try {
+    const statuses = await Promise.all([recommend(), recommend(), recommend()]);
+    assert.deepEqual(statuses.sort(), [200, 200, 503]);
+  } finally {
+    await stopBridge(server);
     await rm(tempDirectory, { recursive: true, force: true });
   }
 });
